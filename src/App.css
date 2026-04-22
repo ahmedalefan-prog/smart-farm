@@ -97,6 +97,10 @@ input, select, textarea {
   -webkit-user-select: text !important;
   user-select: text !important;
   touch-action: manipulation;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-appearance: none;
+  border-radius: 8px;
 }
 
 button:active {

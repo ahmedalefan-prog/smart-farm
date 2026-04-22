@@ -49,8 +49,8 @@ const Field = ({
         <input
           id={inputId}
           type={type}
-          value={value || ''}
-          onChange={(e) => onChange(type === 'number' ? Number(e.target.value) : e.target.value)}
+          value={value === 0 ? '0' : value || ''}
+          onChange={(e) => onChange(type === 'number' ? e.target.value : e.target.value)}
           min={min}
           max={max}
           placeholder={placeholder}
