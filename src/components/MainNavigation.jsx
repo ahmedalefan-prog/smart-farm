@@ -75,7 +75,10 @@ const MainNavigation = ({
       <header style={{
         backgroundColor: colors.dark,
         color: 'white',
-        padding: '12px 16px',
+        paddingTop: 'max(12px, env(safe-area-inset-top))',
+        paddingBottom: '12px',
+        paddingLeft: '16px',
+        paddingRight: '16px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -84,7 +87,7 @@ const MainNavigation = ({
         left: 0,
         right: 0,
         zIndex: 100,
-        height: '56px'
+        minHeight: '56px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {activeSubSection ? (
@@ -179,7 +182,10 @@ const MainNavigation = ({
           backgroundColor: colors.dark,
           display: 'flex',
           justifyContent: 'space-around',
-          padding: '6px 4px',
+          paddingTop: '6px',
+          paddingLeft: '4px',
+          paddingRight: '4px',
+          paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
           zIndex: 100,
           boxShadow: '0 -2px 8px rgba(0,0,0,0.15)'
         }}>

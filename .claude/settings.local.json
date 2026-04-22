@@ -19,7 +19,10 @@
       "Bash(git config *)",
       "Bash(git remote *)",
       "Bash(git branch *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git -C \"C:/Users/ahmed/smart-farm\" config --get credential.helper)",
+      "Read(//c/Users/ahmed/**)",
+      "Bash(curl *)"
     ]
   }
 }

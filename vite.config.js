@@ -17,8 +17,8 @@ export default defineConfig({
         background_color: '#F7F3EC',
         display: 'standalone',
         orientation: 'portrait',
-        scope: '/',
-        start_url: '/',
+        scope: '/smart-farm/',
+        start_url: '/smart-farm/',
         lang: 'ar',
         dir: 'rtl',
         icons: [

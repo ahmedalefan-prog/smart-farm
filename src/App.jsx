@@ -91,7 +91,7 @@ const AppContent = () => {
       <main className="app-main" style={{
         backgroundColor: colors.cream,
         minHeight: '100vh',
-        paddingTop: '56px',
+        paddingTop: 'calc(56px + env(safe-area-inset-top, 0px))',
         paddingBottom: activeSubSection ? '20px' : '80px'
       }}>
         {!hasTodayLog && (
