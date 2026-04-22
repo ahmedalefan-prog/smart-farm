@@ -261,29 +261,38 @@ const CropsSection = () => {
       {showPlantModal && selectedCrop && (
         <Modal
           title={`زراعة ${selectedCrop.name} - اختر القطعة`}
-          onClose={() => { setShowPlantModal(false); setSelectedCrop(null); }}
+          onClose={() => { setShowPlantModal(false); setSelectedCrop(null); setSelectedLand(''); }}
         >
           <div>
-            <select
-              value={selectedLand}
-              onChange={(e) => setSelectedLand(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '8px',
-                border: `1px solid ${colors.sand}`,
-                fontSize: '16px',
-                marginBottom: '20px',
-                fontFamily: 'inherit'
-              }}
-            >
-              <option value="">-- اختر القطعة --</option>
+            <p style={{ color: colors.soil, marginBottom: '12px', fontSize: '14px' }}>اضغط على القطعة المراد زراعتها:</p>
+            <div style={{ marginBottom: '16px' }}>
               {farmData.lands.map(land => (
-                <option key={land.id} value={land.id}>
-                  {land.name} ({land.area} دونم) - {land.currentCrop || 'فارغة'}
-                </option>
+                <button
+                  key={land.id}
+                  type="button"
+                  onClick={() => setSelectedLand(land.id)}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '14px',
+                    marginBottom: '8px',
+                    borderRadius: '10px',
+                    border: `2px solid ${selectedLand === land.id ? colors.green : colors.sand}`,
+                    backgroundColor: selectedLand === land.id ? colors.green + '18' : 'white',
+                    textAlign: 'right',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: '15px',
+                    color: colors.dark
+                  }}
+                >
+                  <strong>{land.name}</strong>
+                  <span style={{ color: colors.soil, fontSize: '13px', marginRight: '8px' }}>
+                    {land.area} دونم · {land.currentCrop ? `🌱 ${land.currentCrop}` : 'فارغة'}
+                  </span>
+                </button>
               ))}
-            </select>
+            </div>
             <button
               onClick={handlePlantCrop}
               disabled={!selectedLand}
