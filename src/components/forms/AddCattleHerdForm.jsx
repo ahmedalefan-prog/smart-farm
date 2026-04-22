@@ -12,30 +12,36 @@ const AddCattleHerdForm = ({ onSuccess }) => {
     avgWeight: '',
     housing: ''
   });
+  const [err, setErr] = useState('');
 
   const types = ['حلوب', 'تسمين', 'عجول', 'تكاثر'];
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.name || !formData.type || !formData.count) {
-      alert('جميع الحقول المطلوبة مطلوبة');
+      setErr('يرجى ملء الحقول المطلوبة: الاسم والنوع والعدد');
       return;
     }
+    setErr('');
     addCattleHerd({
       ...formData,
       count: Number(formData.count),
       avgWeight: Number(formData.avgWeight) || null
     });
-    alert('تمت إضافة القطيع بنجاح');
     onSuccess?.();
   };
 
   return (
     <form onSubmit={handleSubmit}>
+      {err && (
+        <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '8px', marginBottom: '12px', fontSize: '14px' }}>
+          {err}
+        </div>
+      )}
       <Field
         label="اسم القطيع"
         value={formData.name}
-        onChange={(val) => setFormData({ ...formData, name: val })}
+        onChange={(val) => { setErr(''); setFormData({ ...formData, name: val }); }}
         placeholder="مثال: قطيع الحظيرة رقم 1"
         required
       />
@@ -44,24 +50,26 @@ const AddCattleHerdForm = ({ onSuccess }) => {
         type="select"
         options={types}
         value={formData.type}
-        onChange={(val) => setFormData({ ...formData, type: val })}
+        onChange={(val) => { setErr(''); setFormData({ ...formData, type: val }); }}
         required
       />
       <Field
         label="عدد الرؤوس"
-        type="number"
+        type="text"
+        inputMode="numeric"
         value={formData.count}
-        onChange={(val) => setFormData({ ...formData, count: val })}
-        min={1}
+        onChange={(val) => { setErr(''); setFormData({ ...formData, count: val }); }}
+        placeholder="مثال: 50"
         required
       />
       <Field
         label="متوسط الوزن"
-        type="number"
+        type="text"
+        inputMode="decimal"
         unit="كغ"
         value={formData.avgWeight}
         onChange={(val) => setFormData({ ...formData, avgWeight: val })}
-        min={0}
+        placeholder="اختياري"
       />
       <Field
         label="اسم الحظيرة"

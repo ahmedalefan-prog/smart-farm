@@ -13,15 +13,17 @@ const AddFishPondForm = ({ onSuccess }) => {
     depth: '',
     fishCount: ''
   });
+  const [err, setErr] = useState('');
 
   const types = ['بلطي نيلي', 'كارب', 'مختلط'];
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.name || !formData.type || !formData.length || !formData.width || !formData.depth) {
-      alert('جميع الحقول المطلوبة مطلوبة');
+      setErr('يرجى ملء الحقول المطلوبة: الاسم والنوع والأبعاد');
       return;
     }
+    setErr('');
     addFishPond({
       ...formData,
       length: Number(formData.length),
@@ -29,16 +31,22 @@ const AddFishPondForm = ({ onSuccess }) => {
       depth: Number(formData.depth),
       fishCount: Number(formData.fishCount) || 0
     });
-    alert('تمت إضافة الحوض بنجاح');
     onSuccess?.();
   };
 
+  const upd = (key) => (val) => { setErr(''); setFormData(prev => ({ ...prev, [key]: val })); };
+
   return (
     <form onSubmit={handleSubmit}>
+      {err && (
+        <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '8px', marginBottom: '12px', fontSize: '14px' }}>
+          {err}
+        </div>
+      )}
       <Field
         label="اسم الحوض"
         value={formData.name}
-        onChange={(val) => setFormData({ ...formData, name: val })}
+        onChange={upd('name')}
         placeholder="مثال: حوض رقم 1"
         required
       />
@@ -47,44 +55,48 @@ const AddFishPondForm = ({ onSuccess }) => {
         type="select"
         options={types}
         value={formData.type}
-        onChange={(val) => setFormData({ ...formData, type: val })}
+        onChange={upd('type')}
         required
       />
       <div style={{ display: 'flex', gap: '10px' }}>
         <Field
           label="الطول"
-          type="number"
+          type="text"
+          inputMode="decimal"
           unit="م"
           value={formData.length}
-          onChange={(val) => setFormData({ ...formData, length: val })}
-          min={1}
+          onChange={upd('length')}
+          placeholder="0"
           required
         />
         <Field
           label="العرض"
-          type="number"
+          type="text"
+          inputMode="decimal"
           unit="م"
           value={formData.width}
-          onChange={(val) => setFormData({ ...formData, width: val })}
-          min={1}
+          onChange={upd('width')}
+          placeholder="0"
           required
         />
         <Field
           label="العمق"
-          type="number"
+          type="text"
+          inputMode="decimal"
           unit="م"
           value={formData.depth}
-          onChange={(val) => setFormData({ ...formData, depth: val })}
-          min={0.5}
+          onChange={upd('depth')}
+          placeholder="0"
           required
         />
       </div>
       <Field
         label="عدد الأسماك الحالي"
-        type="number"
+        type="text"
+        inputMode="numeric"
         value={formData.fishCount}
-        onChange={(val) => setFormData({ ...formData, fishCount: val })}
-        min={0}
+        onChange={(val) => setFormData(prev => ({ ...prev, fishCount: val }))}
+        placeholder="0"
         hint="اختياري - يمكن إضافته لاحقاً"
       />
       <button

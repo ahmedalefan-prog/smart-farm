@@ -806,8 +806,8 @@ const FeedSection = () => {
             </div>
           )}
 
-          <Field label="عدد الحيوانات" type="number" value={animalCount} onChange={setAnimalCount} min={1} />
-          <Field label="عدد الأيام" type="number" value={days} onChange={setDays} min={1} />
+          <Field label="عدد الحيوانات" type="text" inputMode="numeric" value={animalCount} onChange={setAnimalCount} placeholder="مثال: 50" />
+          <Field label="عدد الأيام" type="text" inputMode="numeric" value={String(days)} onChange={setDays} placeholder="مثال: 30" />
 
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', color: colors.dark }}>

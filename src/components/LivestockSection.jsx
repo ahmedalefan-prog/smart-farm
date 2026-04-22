@@ -15,6 +15,7 @@ const LivestockSection = () => {
 
   const [activeTab, setActiveTab] = useState('cattle');
   const [editItem, setEditItem] = useState(null); // { type, data }
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   const totalCattle  = farmData.livestock.cattle.herds.reduce((s, h) => s + (h.count || 0), 0);
   const totalSheep   = farmData.livestock.sheep.herds.reduce((s, h) => s + (h.count || 0), 0);
@@ -30,22 +31,38 @@ const LivestockSection = () => {
 
   const icons = { cattle: '🐄', sheep: '🐑', poultry: '🐔', fish: '🐟' };
 
-  const confirmDelete = (label, onConfirm) => {
-    if (window.confirm(`هل تريد حذف "${label}"؟`)) onConfirm();
+  const ActionBtns = ({ id, label, onEdit, onDelete }) => {
+    if (pendingDeleteId === id) {
+      return (
+        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+          <button
+            onClick={() => { onDelete(); setPendingDeleteId(null); }}
+            style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: '#dc2626', color: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', fontWeight: 'bold' }}
+          >
+            ⚠️ تأكيد الحذف
+          </button>
+          <button
+            onClick={() => setPendingDeleteId(null)}
+            style={{ flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${colors.sand}`, backgroundColor: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: colors.dark }}
+          >
+            إلغاء
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+        <button onClick={onEdit} style={{
+          flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${colors.sand}`,
+          backgroundColor: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: colors.dark
+        }}>✏️ تعديل</button>
+        <button onClick={() => setPendingDeleteId(id)} style={{
+          flex: 1, padding: '8px', borderRadius: '8px', border: 'none',
+          backgroundColor: '#fee2e2', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: '#dc2626'
+        }}>🗑️ حذف</button>
+      </div>
+    );
   };
-
-  const ActionBtns = ({ label, onEdit, onDelete }) => (
-    <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-      <button onClick={onEdit} style={{
-        flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${colors.sand}`,
-        backgroundColor: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: colors.dark
-      }}>✏️ تعديل</button>
-      <button onClick={() => confirmDelete(label, onDelete)} style={{
-        flex: 1, padding: '8px', borderRadius: '8px', border: 'none',
-        backgroundColor: '#fee2e2', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: '#dc2626'
-      }}>🗑️ حذف</button>
-    </div>
-  );
 
   const EmptyState = () => (
     <div style={{ textAlign: 'center', padding: '40px', color: colors.soil }}>
@@ -186,7 +203,7 @@ const LivestockSection = () => {
               {h.avgWeight && <div><span style={{ color: colors.soil }}>الوزن:</span> <strong>{h.avgWeight} كغ</strong></div>}
               {h.housing   && <div><span style={{ color: colors.soil }}>الحظيرة:</span> <strong>{h.housing}</strong></div>}
             </div>
-            <ActionBtns label={h.name} onEdit={() => setEditItem({ type: 'cattle', data: h })} onDelete={() => deleteCattleHerd(h.id)} />
+            <ActionBtns id={h.id} label={h.name} onEdit={() => setEditItem({ type: 'cattle', data: h })} onDelete={() => deleteCattleHerd(h.id)} />
           </div>
         ))
       )}
@@ -203,7 +220,7 @@ const LivestockSection = () => {
               {h.avgWeight && <div><span style={{ color: colors.soil }}>الوزن:</span> <strong>{h.avgWeight} كغ</strong></div>}
               {h.housing   && <div><span style={{ color: colors.soil }}>الحظيرة:</span> <strong>{h.housing}</strong></div>}
             </div>
-            <ActionBtns label={h.name} onEdit={() => setEditItem({ type: 'sheep', data: h })} onDelete={() => deleteSheepHerd(h.id)} />
+            <ActionBtns id={h.id} label={h.name} onEdit={() => setEditItem({ type: 'sheep', data: h })} onDelete={() => deleteSheepHerd(h.id)} />
           </div>
         ))
       )}
@@ -228,7 +245,7 @@ const LivestockSection = () => {
                   <small style={{ color: colors.soil }}>{Math.min(100, Math.round((f.ageDays / 42) * 100))}% من التسويق</small>
                 </div>
               </div>
-              <ActionBtns label={f.name} onEdit={() => setEditItem({ type: 'poultry', data: f })} onDelete={() => deletePoultryFlock(f.id)} />
+              <ActionBtns id={f.id} label={f.name} onEdit={() => setEditItem({ type: 'poultry', data: f })} onDelete={() => deletePoultryFlock(f.id)} />
             </div>
           );
         })
@@ -253,7 +270,7 @@ const LivestockSection = () => {
               {volume > 0 && <div style={{ height: '6px', backgroundColor: colors.sand, borderRadius: '3px', marginBottom: '12px' }}>
                 <div style={{ width: `${Math.min(100, density)}%`, height: '100%', backgroundColor: density > 90 ? colors.orange : colors.sky, borderRadius: '3px' }} />
               </div>}
-              <ActionBtns label={p.name} onEdit={() => setEditItem({ type: 'fish', data: p })} onDelete={() => deleteFishPond(p.id)} />
+              <ActionBtns id={p.id} label={p.name} onEdit={() => setEditItem({ type: 'fish', data: p })} onDelete={() => deleteFishPond(p.id)} />
             </div>
           );
         })

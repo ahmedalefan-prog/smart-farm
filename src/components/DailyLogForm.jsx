@@ -16,16 +16,17 @@ const DailyLogForm = ({ onSuccess }) => {
     irrigationDone: false,
     fieldNotes: ''
   });
+  const [error, setError] = useState('');
 
   const weatherOptions = ['مشمس', 'غائم جزئي', 'غائم', 'ممطر', 'عاصف'];
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.maxTemp || !formData.minTemp || !formData.weather) {
-      alert('الحقول المطلوبة: درجة الحرارة والحالة الجوية');
+      setError('الحقول المطلوبة: درجة الحرارة والحالة الجوية');
       return;
     }
-
+    setError('');
     addDailyLog({
       maxTemp: Number(formData.maxTemp),
       minTemp: Number(formData.minTemp),
@@ -37,8 +38,6 @@ const DailyLogForm = ({ onSuccess }) => {
       irrigationDone: formData.irrigationDone,
       fieldNotes: formData.fieldNotes
     });
-
-    alert('تم حفظ السجل اليومي بنجاح');
     onSuccess?.();
   };
 
@@ -59,23 +58,31 @@ const DailyLogForm = ({ onSuccess }) => {
 
   return (
     <form onSubmit={handleSubmit} style={{ maxHeight: '60vh', overflowY: 'auto', padding: '5px' }}>
+      {error && (
+        <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '8px', marginBottom: '12px', fontSize: '14px' }}>
+          {error}
+        </div>
+      )}
+
       <h3 style={{ color: colors.dark, marginBottom: '16px' }}>☀️ الطقس</h3>
 
       <div style={{ display: 'flex', gap: '10px' }}>
         <Field
           label="العظمى"
-          type="number"
+          type="text"
+          inputMode="decimal"
           unit="°م"
           value={formData.maxTemp}
-          onChange={(val) => setFormData({ ...formData, maxTemp: val })}
+          onChange={(val) => { setError(''); setFormData({ ...formData, maxTemp: val }); }}
           required
         />
         <Field
           label="الصغرى"
-          type="number"
+          type="text"
+          inputMode="decimal"
           unit="°م"
           value={formData.minTemp}
-          onChange={(val) => setFormData({ ...formData, minTemp: val })}
+          onChange={(val) => { setError(''); setFormData({ ...formData, minTemp: val }); }}
           required
         />
       </div>
@@ -85,7 +92,7 @@ const DailyLogForm = ({ onSuccess }) => {
         type="select"
         options={weatherOptions}
         value={formData.weather}
-        onChange={(val) => setFormData({ ...formData, weather: val })}
+        onChange={(val) => { setError(''); setFormData({ ...formData, weather: val }); }}
         required
       />
 
@@ -93,7 +100,8 @@ const DailyLogForm = ({ onSuccess }) => {
 
       <Field
         label="إنتاج الحليب"
-        type="number"
+        type="text"
+        inputMode="decimal"
         unit="لتر"
         value={formData.milkProduction}
         onChange={(val) => setFormData({ ...formData, milkProduction: val })}
@@ -102,7 +110,8 @@ const DailyLogForm = ({ onSuccess }) => {
 
       <Field
         label="نفوق"
-        type="number"
+        type="text"
+        inputMode="numeric"
         value={formData.mortality}
         onChange={(val) => setFormData({ ...formData, mortality: val })}
         hint="عدد الحالات (إن وجدت)"
@@ -119,7 +128,8 @@ const DailyLogForm = ({ onSuccess }) => {
 
       <Field
         label="العلف المستهلك"
-        type="number"
+        type="text"
+        inputMode="decimal"
         unit="كغ"
         value={formData.feedConsumed}
         onChange={(val) => setFormData({ ...formData, feedConsumed: val })}

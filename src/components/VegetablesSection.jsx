@@ -19,6 +19,7 @@ const VegetablesSection = () => {
   const [selectedVeg, setSelectedVeg] = useState(null);
   const [showPlantModal, setShowPlantModal] = useState(false);
   const [selectedLand, setSelectedLand] = useState('');
+  const [notification, setNotification] = useState(null);
 
   const seasons = ['الكل', 'صيفي', 'شتوي'];
 
@@ -28,33 +29,49 @@ const VegetablesSection = () => {
     return matchesSearch && matchesSeason;
   });
 
-  // الشهر الحالي
   const currentMonth = new Date().getMonth() + 1;
-
   const isPlantingSeason = (veg) => veg.plantingMonths?.includes(currentMonth);
 
+  const notify = (msg, type = 'success') => {
+    setNotification({ msg, type });
+    setTimeout(() => setNotification(null), 3500);
+  };
+
   const handlePlantVeg = () => {
-    if (selectedLand && selectedVeg) {
-      const plantingDate = new Date().toISOString().split('T')[0];
-      const daysRange = selectedVeg.daysToHarvest.split('-').map(d => parseInt(d));
-      const avgDays = daysRange.length === 2 ? (daysRange[0] + daysRange[1]) / 2 : parseInt(daysRange[0]);
-      const harvestDate = new Date(Date.now() + avgDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    if (!selectedLand || !selectedVeg) return;
+    const plantingDate = new Date().toISOString().split('T')[0];
+    const daysNums = (selectedVeg.daysToHarvest || '').split('-').map(d => parseInt(d)).filter(n => !isNaN(n));
+    const avgDays = daysNums.length >= 2 ? (daysNums[0] + daysNums[1]) / 2 : daysNums[0] || 60;
+    const harvestDate = new Date(Date.now() + avgDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      updateLand(selectedLand, {
-        currentCrop: selectedVeg.name,
-        plantingDate,
-        expectedHarvest: harvestDate
-      });
+    updateLand(selectedLand, {
+      currentCrop: selectedVeg.name,
+      plantingDate,
+      expectedHarvest: harvestDate
+    });
 
-      alert(`تم زراعة ${selectedVeg.name} في القطعة المحددة`);
-      setShowPlantModal(false);
-      setSelectedVeg(null);
-      setSelectedLand('');
-    }
+    const vegName = selectedVeg.name;
+    setShowPlantModal(false);
+    setSelectedVeg(null);
+    setSelectedLand('');
+    notify(`✅ تم زراعة ${vegName} بنجاح`);
   };
 
   return (
     <div style={{ padding: '20px' }}>
+      {notification && (
+        <div style={{
+          position: 'fixed', top: 'calc(64px + env(safe-area-inset-top, 0px))',
+          right: '16px', left: '16px', zIndex: 2000,
+          backgroundColor: notification.type === 'warning' ? colors.gold : colors.teal,
+          color: 'white', padding: '14px 16px', borderRadius: '10px',
+          fontSize: '14px', boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          textAlign: 'center'
+        }}>
+          {notification.msg}
+        </div>
+      )}
+
       <h2 style={{ color: colors.dark, marginBottom: '20px' }}>🥬 الخضروات</h2>
 
       {/* البحث والتصفية */}
@@ -239,29 +256,38 @@ const VegetablesSection = () => {
       {showPlantModal && selectedVeg && (
         <Modal
           title={`زراعة ${selectedVeg.name} - اختر القطعة`}
-          onClose={() => { setShowPlantModal(false); setSelectedVeg(null); }}
+          onClose={() => { setShowPlantModal(false); setSelectedVeg(null); setSelectedLand(''); }}
         >
           <div>
-            <select
-              value={selectedLand}
-              onChange={(e) => setSelectedLand(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '8px',
-                border: `1px solid ${colors.sand}`,
-                fontSize: '16px',
-                marginBottom: '20px',
-                fontFamily: 'inherit'
-              }}
-            >
-              <option value="">-- اختر القطعة --</option>
+            <p style={{ color: colors.soil, marginBottom: '12px', fontSize: '14px' }}>اضغط على القطعة المراد زراعتها:</p>
+            <div style={{ marginBottom: '16px' }}>
               {farmData.lands.map(land => (
-                <option key={land.id} value={land.id}>
-                  {land.name} ({land.area} دونم) - {land.currentCrop || 'فارغة'}
-                </option>
+                <button
+                  key={land.id}
+                  type="button"
+                  onClick={() => setSelectedLand(land.id)}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '14px',
+                    marginBottom: '8px',
+                    borderRadius: '10px',
+                    border: `2px solid ${selectedLand === land.id ? colors.teal : colors.sand}`,
+                    backgroundColor: selectedLand === land.id ? colors.teal + '18' : 'white',
+                    textAlign: 'right',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: '15px',
+                    color: colors.dark
+                  }}
+                >
+                  <strong>{land.name}</strong>
+                  <span style={{ color: colors.soil, fontSize: '13px', marginRight: '8px' }}>
+                    {land.area} دونم · {land.currentCrop ? `🌱 ${land.currentCrop}` : 'فارغة'}
+                  </span>
+                </button>
               ))}
-            </select>
+            </div>
             <button
               onClick={handlePlantVeg}
               disabled={!selectedLand}

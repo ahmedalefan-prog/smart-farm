@@ -8,13 +8,13 @@ const SettingsSection = ({ onClose }) => {
   const [farmName, setFarmName] = useState(farmData.farm.name);
   const [totalArea, setTotalArea] = useState(farmData.farm.totalArea);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [importError, setImportError] = useState('');
 
   const handleSave = () => {
     setFarmData(prev => ({
       ...prev,
       farm: { ...prev.farm, name: farmName, totalArea: Number(totalArea) }
     }));
-    alert('تم حفظ الإعدادات');
     if (onClose) onClose();
   };
 
@@ -31,15 +31,15 @@ const SettingsSection = ({ onClose }) => {
   const handleImport = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    setImportError('');
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
         const parsed = JSON.parse(ev.target.result);
         importFullData(parsed);
-        alert('تم استيراد البيانات بنجاح');
         if (onClose) onClose();
       } catch {
-        alert('خطأ: الملف غير صالح');
+        setImportError('خطأ: الملف غير صالح. يرجى اختيار ملف JSON صحيح.');
       }
     };
     reader.readAsText(file);
@@ -79,7 +79,7 @@ const SettingsSection = ({ onClose }) => {
       <div style={cardStyle}>
         <h3 style={{ color: colors.dark, marginBottom: '16px' }}>معلومات المزرعة</h3>
         <Field label="اسم المزرعة" value={farmName} onChange={setFarmName} />
-        <Field label="المساحة الكلية" type="number" unit="دونم" value={totalArea} onChange={setTotalArea} min={1} />
+        <Field label="المساحة الكلية" type="text" inputMode="decimal" unit="دونم" value={String(totalArea)} onChange={setTotalArea} placeholder="مثال: 200" />
         <button onClick={handleSave} style={{ ...btnStyle(colors.green), marginTop: '8px' }}>
           💾 حفظ الإعدادات
         </button>
@@ -90,6 +90,11 @@ const SettingsSection = ({ onClose }) => {
         <button onClick={handleExport} style={{ ...btnStyle(colors.sky), marginBottom: '12px' }}>
           📤 تصدير جميع البيانات
         </button>
+        {importError && (
+          <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '8px', marginBottom: '10px', fontSize: '14px' }}>
+            {importError}
+          </div>
+        )}
         <label style={{ ...btnStyle(colors.teal), display: 'block', textAlign: 'center', cursor: 'pointer' }}>
           📥 استيراد البيانات
           <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />

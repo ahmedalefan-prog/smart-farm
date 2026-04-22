@@ -11,30 +11,36 @@ const AddPoultryFlockForm = ({ onSuccess }) => {
     count: '',
     ageDays: ''
   });
+  const [err, setErr] = useState('');
 
   const breeds = ['روس 308', 'كوب 500', 'لوهان براون', 'أربور أيكرز', 'محلي'];
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.name || !formData.count || !formData.ageDays) {
-      alert('جميع الحقول المطلوبة مطلوبة');
+      setErr('يرجى ملء الحقول المطلوبة: الاسم والعدد والعمر');
       return;
     }
+    setErr('');
     addPoultryFlock({
       ...formData,
       count: Number(formData.count),
       ageDays: Number(formData.ageDays)
     });
-    alert('تمت إضافة القطيع بنجاح');
     onSuccess?.();
   };
 
   return (
     <form onSubmit={handleSubmit}>
+      {err && (
+        <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '8px', marginBottom: '12px', fontSize: '14px' }}>
+          {err}
+        </div>
+      )}
       <Field
         label="اسم القطيع"
         value={formData.name}
-        onChange={(val) => setFormData({ ...formData, name: val })}
+        onChange={(val) => { setErr(''); setFormData({ ...formData, name: val }); }}
         placeholder="مثال: عنبر رقم 1"
         required
       />
@@ -47,20 +53,21 @@ const AddPoultryFlockForm = ({ onSuccess }) => {
       />
       <Field
         label="عدد الطيور"
-        type="number"
+        type="text"
+        inputMode="numeric"
         value={formData.count}
-        onChange={(val) => setFormData({ ...formData, count: val })}
-        min={1}
+        onChange={(val) => { setErr(''); setFormData({ ...formData, count: val }); }}
+        placeholder="مثال: 1000"
         required
       />
       <Field
         label="عمر الطيور"
-        type="number"
+        type="text"
+        inputMode="numeric"
         unit="يوم"
         value={formData.ageDays}
-        onChange={(val) => setFormData({ ...formData, ageDays: val })}
-        min={1}
-        max={365}
+        onChange={(val) => { setErr(''); setFormData({ ...formData, ageDays: val }); }}
+        placeholder="مثال: 20"
         required
       />
       <button

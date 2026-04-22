@@ -172,9 +172,9 @@ const IrrigationSection = () => {
             <Field label="مرحلة النمو" type="select"
               options={[{ value: 'initial', label: 'بداية' }, { value: 'mid', label: 'وسط (ذروة)' }, { value: 'late', label: 'نهاية (نضج)' }]}
               value={calcInputs.growthStage} onChange={v => setCalc('growthStage', v)} />
-            <Field label="متوسط الحرارة" type="number" unit="°م" value={calcInputs.temperature} onChange={v => setCalc('temperature', v)} />
+            <Field label="متوسط الحرارة" type="text" inputMode="decimal" unit="°م" value={calcInputs.temperature} onChange={v => setCalc('temperature', v)} />
             <Field label="نوع التربة" type="select" options={Object.keys(soilTypes)} value={calcInputs.soilType} onChange={v => setCalc('soilType', v)} />
-            <Field label="المساحة" type="number" unit="هكتار" value={calcInputs.area} onChange={v => setCalc('area', v)} />
+            <Field label="المساحة" type="text" inputMode="decimal" unit="هكتار" value={calcInputs.area} onChange={v => setCalc('area', v)} />
             <Field label="نظام الري" type="select"
               options={sprinklerTypes.map(s => ({ value: s.id, label: s.name }))}
               value={calcInputs.irrigationType} onChange={v => setCalc('irrigationType', v)} />
@@ -300,7 +300,7 @@ const IrrigationSection = () => {
           <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', marginBottom: '16px' }}>
             <h3 style={{ color: colors.dark, marginBottom: '16px' }}>احسب احتياجات التسميد الموسمية</h3>
             <Field label="المحصول" type="select" options={Object.keys(fertilizerData)} value={fertCrop} onChange={setFertCrop} />
-            <Field label="المساحة" type="number" unit="هكتار" value={fertArea} onChange={setFertArea} />
+            <Field label="المساحة" type="text" inputMode="decimal" unit="هكتار" value={fertArea} onChange={setFertArea} />
           </div>
 
           {fertResult ? (

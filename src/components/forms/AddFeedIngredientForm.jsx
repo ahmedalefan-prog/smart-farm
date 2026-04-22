@@ -11,40 +11,47 @@ const AddFeedIngredientForm = ({ onSuccess }) => {
     unit: 'كغ',
     minThreshold: ''
   });
+  const [err, setErr] = useState('');
 
   const units = ['كغ', 'طن'];
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.name || !formData.quantity) {
-      alert('جميع الحقول المطلوبة مطلوبة');
+      setErr('يرجى ملء الحقول المطلوبة: الاسم والكمية');
       return;
     }
+    setErr('');
     addFeedIngredient({
       ...formData,
       quantity: Number(formData.quantity),
       minThreshold: Number(formData.minThreshold) || 0
     });
-    alert('تمت إضافة المادة بنجاح');
     onSuccess?.();
   };
 
   return (
     <form onSubmit={handleSubmit}>
+      {err && (
+        <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '8px', marginBottom: '12px', fontSize: '14px' }}>
+          {err}
+        </div>
+      )}
       <Field
         label="اسم المادة"
         value={formData.name}
-        onChange={(val) => setFormData({ ...formData, name: val })}
+        onChange={(val) => { setErr(''); setFormData({ ...formData, name: val }); }}
         placeholder="مثال: ذرة صفراء"
         required
       />
       <Field
         label="الكمية"
-        type="number"
+        type="text"
+        inputMode="decimal"
         unit={formData.unit}
         value={formData.quantity}
-        onChange={(val) => setFormData({ ...formData, quantity: val })}
-        min={0}
+        onChange={(val) => { setErr(''); setFormData({ ...formData, quantity: val }); }}
+        placeholder="0"
         required
       />
       <Field
@@ -57,11 +64,12 @@ const AddFeedIngredientForm = ({ onSuccess }) => {
       />
       <Field
         label="الحد الأدنى للتنبيه"
-        type="number"
+        type="text"
+        inputMode="decimal"
         unit={formData.unit}
         value={formData.minThreshold}
         onChange={(val) => setFormData({ ...formData, minThreshold: val })}
-        min={0}
+        placeholder="0"
         hint="سيظهر تنبيه عندما تقل الكمية عن هذا الحد"
       />
       <button
