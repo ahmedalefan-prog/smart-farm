@@ -102,6 +102,40 @@ export const FarmProvider = ({ children }) => {
     }));
   };
 
+  // دوال مساعدة لتحديث وحذف الحيوانات
+  const makeUpdater = (animalKey, listKey) => (id, updates) =>
+    setFarmData(prev => ({
+      ...prev,
+      livestock: {
+        ...prev.livestock,
+        [animalKey]: {
+          [listKey]: prev.livestock[animalKey][listKey].map(item =>
+            item.id === id ? { ...item, ...updates } : item
+          )
+        }
+      }
+    }));
+
+  const makeDeleter = (animalKey, listKey) => (id) =>
+    setFarmData(prev => ({
+      ...prev,
+      livestock: {
+        ...prev.livestock,
+        [animalKey]: {
+          [listKey]: prev.livestock[animalKey][listKey].filter(item => item.id !== id)
+        }
+      }
+    }));
+
+  const updateCattleHerd  = makeUpdater('cattle',  'herds');
+  const deleteCattleHerd  = makeDeleter('cattle',  'herds');
+  const updateSheepHerd   = makeUpdater('sheep',   'herds');
+  const deleteSheepHerd   = makeDeleter('sheep',   'herds');
+  const updatePoultryFlock = makeUpdater('poultry', 'flocks');
+  const deletePoultryFlock = makeDeleter('poultry', 'flocks');
+  const updateFishPond    = makeUpdater('fish',    'ponds');
+  const deleteFishPond    = makeDeleter('fish',    'ponds');
+
   // دوال إدارة الأبقار
   const addCattleHerd = (herd) => {
     setFarmData(prev => ({
@@ -226,9 +260,17 @@ export const FarmProvider = ({ children }) => {
     updateLand,
     deleteLand,
     addCattleHerd,
+    updateCattleHerd,
+    deleteCattleHerd,
     addSheepHerd,
+    updateSheepHerd,
+    deleteSheepHerd,
     addPoultryFlock,
+    updatePoultryFlock,
+    deletePoultryFlock,
     addFishPond,
+    updateFishPond,
+    deleteFishPond,
     addFeedIngredient,
     updateIngredientQuantity,
     addSoilTest,

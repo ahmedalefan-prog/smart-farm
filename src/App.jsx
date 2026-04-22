@@ -9,6 +9,7 @@ import HelpSection from './components/HelpSection';
 import DailyLogForm from './components/DailyLogForm';
 import AddLandForm from './components/forms/AddLandForm';
 import AddCattleHerdForm from './components/forms/AddCattleHerdForm';
+import AddSheepHerdForm from './components/forms/AddSheepHerdForm';
 import AddPoultryFlockForm from './components/forms/AddPoultryFlockForm';
 import AddFishPondForm from './components/forms/AddFishPondForm';
 import AddFeedIngredientForm from './components/forms/AddFeedIngredientForm';
@@ -29,11 +30,12 @@ import './App.css';
 
 const formComponents = {
   dailyLog: { title: 'سجل العمليات اليومي', color: colors.green },
-  land:     { title: 'إضافة قطعة أرض', color: colors.wheat },
-  cattle:   { title: 'إضافة قطيع أبقار', color: colors.soil },
-  poultry:  { title: 'إضافة قطيع دواجن', color: colors.orange },
-  fish:     { title: 'إضافة حوض أسماك', color: colors.sky },
-  feed:     { title: 'إضافة مادة علفية', color: colors.lime }
+  land:     { title: 'إضافة قطعة أرض',      color: colors.wheat },
+  cattle:   { title: 'إضافة قطيع أبقار',    color: colors.soil },
+  sheep:    { title: 'إضافة قطيع أغنام',    color: colors.green },
+  poultry:  { title: 'إضافة قطيع دواجن',    color: colors.orange },
+  fish:     { title: 'إضافة حوض أسماك',     color: colors.sky },
+  feed:     { title: 'إضافة مادة علفية',    color: colors.lime }
 };
 
 const AppContent = () => {
@@ -209,6 +211,7 @@ const AppContent = () => {
           {activeForm === 'dailyLog' && <DailyLogForm onSuccess={() => setActiveForm(null)} />}
           {activeForm === 'land'     && <AddLandForm onSuccess={() => setActiveForm(null)} />}
           {activeForm === 'cattle'   && <AddCattleHerdForm onSuccess={() => setActiveForm(null)} />}
+          {activeForm === 'sheep'    && <AddSheepHerdForm  onSuccess={() => setActiveForm(null)} />}
           {activeForm === 'poultry'  && <AddPoultryFlockForm onSuccess={() => setActiveForm(null)} />}
           {activeForm === 'fish'     && <AddFishPondForm onSuccess={() => setActiveForm(null)} />}
           {activeForm === 'feed'     && <AddFeedIngredientForm onSuccess={() => setActiveForm(null)} />}
