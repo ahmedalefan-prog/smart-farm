@@ -184,7 +184,8 @@ const ReportsSection = () => {
         {[
           { id: 'weekly', name: 'أسبوعي' },
           { id: 'monthly', name: 'شهري' },
-          { id: 'overview', name: 'نظرة عامة' }
+          { id: 'overview', name: 'نظرة عامة' },
+          { id: 'logs', name: '📋 السجل' }
         ].map(tab => (
           <button
             key={tab.id}
@@ -379,6 +380,71 @@ const ReportsSection = () => {
               {rec.text}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* سجل العمليات اليومي */}
+      {reportType === 'logs' && (
+        <div>
+          {dailyLogsData.length === 0 ? (
+            <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', textAlign: 'center', color: colors.soil }}>
+              لا توجد سجلات بعد — سجّل العمليات اليومية لتظهر هنا
+            </div>
+          ) : (
+            [...dailyLogsData].reverse().map(log => {
+              const weatherIcons = { 'مشمس': '☀️', 'غائم جزئي': '⛅', 'غائم': '☁️', 'ممطر': '🌧️', 'عاصف': '💨' };
+              const weatherIcon = weatherIcons[log.weather] || '🌤️';
+              const dateStr = new Date(log.date).toLocaleDateString('ar-IQ', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+              return (
+                <div key={log.id} style={{ backgroundColor: 'white', borderRadius: '12px', padding: '14px', marginBottom: '10px', border: `1px solid ${colors.sand}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <strong style={{ color: colors.dark, fontSize: '14px' }}>{dateStr}</strong>
+                    <span style={{ fontSize: '22px' }}>{weatherIcon}</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '13px' }}>
+                    <div style={{ backgroundColor: colors.orange + '20', padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
+                      <div style={{ color: colors.soil, marginBottom: '2px' }}>🌡️ حرارة</div>
+                      <strong style={{ color: colors.dark }}>{log.maxTemp}° / {log.minTemp}°</strong>
+                    </div>
+                    {log.milkProduction > 0 && (
+                      <div style={{ backgroundColor: colors.sky + '20', padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ color: colors.soil, marginBottom: '2px' }}>🥛 حليب</div>
+                        <strong style={{ color: colors.dark }}>{log.milkProduction} ل</strong>
+                      </div>
+                    )}
+                    {log.feedConsumed > 0 && (
+                      <div style={{ backgroundColor: colors.lime + '20', padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ color: colors.soil, marginBottom: '2px' }}>📦 علف</div>
+                        <strong style={{ color: colors.dark }}>{log.feedConsumed} كغ</strong>
+                      </div>
+                    )}
+                    {log.mortality > 0 && (
+                      <div style={{ backgroundColor: colors.red + '15', padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ color: colors.soil, marginBottom: '2px' }}>⚠️ نفوق</div>
+                        <strong style={{ color: colors.red }}>{log.mortality}</strong>
+                      </div>
+                    )}
+                    {log.irrigationDone && (
+                      <div style={{ backgroundColor: colors.teal + '15', padding: '8px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ color: colors.teal, marginBottom: '2px' }}>💧 ري</div>
+                        <strong style={{ color: colors.teal }}>✓</strong>
+                      </div>
+                    )}
+                  </div>
+                  {log.treatments && (
+                    <div style={{ marginTop: '8px', fontSize: '13px', color: colors.soil }}>
+                      💊 {log.treatments}
+                    </div>
+                  )}
+                  {log.fieldNotes && (
+                    <div style={{ marginTop: '6px', fontSize: '13px', color: colors.soil, fontStyle: 'italic' }}>
+                      📝 {log.fieldNotes}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       )}
 

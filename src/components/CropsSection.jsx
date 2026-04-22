@@ -3,15 +3,18 @@ import { useFarm } from '../context/FarmContext';
 import { cropsData } from '../data/cropsData';
 import { colors } from '../theme/theme';
 import Modal from './shared/Modal';
+import Field from './shared/Field';
 
 const CropsSection = () => {
-  const { farmData, updateLand } = useFarm();
+  const { farmData, updateLand, deleteLand } = useFarm();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('الكل');
   const [selectedCrop, setSelectedCrop] = useState(null);
   const [showPlantModal, setShowPlantModal] = useState(false);
   const [selectedLand, setSelectedLand] = useState('');
   const [notification, setNotification] = useState(null);
+  const [editLand, setEditLand] = useState(null);
+  const [pendingDeleteLandId, setPendingDeleteLandId] = useState(null);
 
   const categories = ['الكل', 'حبوب', 'أعلاف', 'بقوليات', 'درنات'];
 
@@ -24,6 +27,19 @@ const CropsSection = () => {
   const notify = (msg, type = 'success') => {
     setNotification({ msg, type });
     setTimeout(() => setNotification(null), 3500);
+  };
+
+  const harvestCrop = (land) => {
+    const cropName = land.currentCrop;
+    const updatedHistory = [...(land.cropHistory || [])];
+    if (cropName) updatedHistory.push(cropName);
+    updateLand(land.id, {
+      currentCrop: null,
+      plantingDate: null,
+      expectedHarvest: null,
+      cropHistory: updatedHistory
+    });
+    notify(`✅ تم تسجيل حصاد ${cropName} من ${land.name}`);
   };
 
   const handlePlantCrop = () => {
@@ -65,6 +81,32 @@ const CropsSection = () => {
     }
   };
 
+  const LandEditForm = ({ land }) => {
+    const soilTypes = ['غرينية خفيفة', 'غرينية متوسطة', 'رملية', 'طينية', 'مختلطة'];
+    const [f, setF] = useState({ name: land.name, area: String(land.area), soilType: land.soilType || '' });
+    const [err, setErr] = useState('');
+    const save = (e) => {
+      e.preventDefault();
+      const areaNum = parseFloat(f.area);
+      if (!f.name.trim()) { setErr('يرجى إدخال اسم القطعة'); return; }
+      if (!f.area || isNaN(areaNum) || areaNum <= 0) { setErr('يرجى إدخال مساحة صحيحة'); return; }
+      updateLand(land.id, { name: f.name.trim(), area: areaNum, soilType: f.soilType });
+      setEditLand(null);
+      notify('✅ تم تعديل بيانات القطعة');
+    };
+    return (
+      <form onSubmit={save}>
+        {err && <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '8px', marginBottom: '12px', fontSize: '14px' }}>{err}</div>}
+        <Field label="اسم القطعة" value={f.name} onChange={v => { setErr(''); setF(p => ({ ...p, name: v })); }} required />
+        <Field label="المساحة" type="text" inputMode="decimal" unit="دونم" value={f.area} onChange={v => { setErr(''); setF(p => ({ ...p, area: v })); }} placeholder="مثال: 50" required />
+        <Field label="نوع التربة" type="select" options={soilTypes} value={f.soilType} onChange={v => setF(p => ({ ...p, soilType: v }))} />
+        <button type="submit" style={{ width: '100%', padding: '13px', backgroundColor: colors.green, color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', fontFamily: 'inherit', marginTop: '8px' }}>
+          حفظ التعديلات
+        </button>
+      </form>
+    );
+  };
+
   return (
     <div style={{ padding: '20px' }}>
       {notification && (
@@ -81,40 +123,72 @@ const CropsSection = () => {
       )}
       <h2 style={{ color: colors.dark, marginBottom: '20px' }}>🌾 المحاصيل الزراعية</h2>
 
-      {/* الأراضي المزروعة */}
-      {farmData.lands.filter(l => l.currentCrop).length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ color: colors.dark, marginBottom: '12px' }}>📍 الأراضي المزروعة حالياً</h3>
-          {farmData.lands.filter(l => l.currentCrop).map(land => {
+      {/* إدارة الأراضي */}
+      {farmData.lands.length > 0 && (
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ color: colors.dark, marginBottom: '12px' }}>📍 الأراضي ({farmData.lands.length})</h3>
+          {farmData.lands.map(land => {
             const today = new Date();
             const harvest = land.expectedHarvest ? new Date(land.expectedHarvest) : null;
             const daysLeft = harvest ? Math.ceil((harvest - today) / (1000 * 60 * 60 * 24)) : null;
+            const isPendingDelete = pendingDeleteLandId === land.id;
             return (
               <div key={land.id} style={{
                 backgroundColor: 'white',
-                padding: '12px',
-                borderRadius: '8px',
-                marginBottom: '8px',
-                border: `1px solid ${colors.wheat}`,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                padding: '14px',
+                borderRadius: '10px',
+                marginBottom: '10px',
+                border: `1px solid ${land.currentCrop ? colors.wheat : colors.sand}`
               }}>
-                <div>
-                  <strong>{land.name}</strong>
-                  <div style={{ fontSize: '14px', color: colors.soil }}>
-                    {land.currentCrop} · {land.area} دونم
-                  </div>
+                <div style={{ marginBottom: '8px' }}>
+                  <strong style={{ color: colors.dark, fontSize: '15px' }}>{land.name}</strong>
+                  <span style={{ fontSize: '13px', color: colors.soil, marginRight: '8px' }}>
+                    {land.area} دونم{land.soilType ? ` · ${land.soilType}` : ''}
+                  </span>
+                  {land.currentCrop ? (
+                    <div style={{ fontSize: '14px', color: colors.green, marginTop: '4px' }}>
+                      🌱 {land.currentCrop}
+                      {daysLeft !== null && (
+                        <span style={{
+                          marginRight: '8px', fontSize: '13px',
+                          color: daysLeft <= 7 ? colors.orange : colors.soil
+                        }}>
+                          · {daysLeft > 0 ? `${daysLeft} يوم للحصاد` : '⚡ حان موعد الحصاد!'}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '13px', color: colors.soil, marginTop: '4px' }}>فارغة</div>
+                  )}
+                  {land.cropHistory?.length > 0 && (
+                    <div style={{ fontSize: '12px', color: colors.soil, marginTop: '3px', opacity: 0.8 }}>
+                      السابق: {land.cropHistory.slice(-3).join(' ← ')}
+                    </div>
+                  )}
                 </div>
-                {daysLeft !== null && (
-                  <div style={{
-                    backgroundColor: daysLeft <= 7 ? colors.orange : colors.lime,
-                    color: 'white',
-                    padding: '6px 12px',
-                    borderRadius: '20px',
-                    fontSize: '13px'
-                  }}>
-                    {daysLeft > 0 ? `${daysLeft} يوم للحصاد` : 'حان موعد الحصاد!'}
+
+                {isPendingDelete ? (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={() => { deleteLand(land.id); setPendingDeleteLandId(null); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: '#dc2626', color: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', fontWeight: 'bold' }}>
+                      ⚠️ تأكيد الحذف
+                    </button>
+                    <button onClick={() => setPendingDeleteLandId(null)} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${colors.sand}`, backgroundColor: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit' }}>
+                      إلغاء
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {land.currentCrop && (
+                      <button onClick={() => harvestCrop(land)} style={{ flex: 1, minWidth: '90px', padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: colors.lime + '30', color: colors.green, cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', fontWeight: 'bold' }}>
+                        ✅ تم الحصاد
+                      </button>
+                    )}
+                    <button onClick={() => setEditLand(land)} style={{ flex: 1, minWidth: '70px', padding: '8px', borderRadius: '8px', border: `1px solid ${colors.sand}`, backgroundColor: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: colors.dark }}>
+                      ✏️ تعديل
+                    </button>
+                    <button onClick={() => setPendingDeleteLandId(land.id)} style={{ flex: 1, minWidth: '70px', padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: '#fee2e2', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: '#dc2626' }}>
+                      🗑️ حذف
+                    </button>
                   </div>
                 )}
               </div>
@@ -312,6 +386,13 @@ const CropsSection = () => {
               ✅ تأكيد الزراعة
             </button>
           </div>
+        </Modal>
+      )}
+
+      {/* نافذة تعديل الأرض */}
+      {editLand && (
+        <Modal title={`تعديل: ${editLand.name}`} onClose={() => setEditLand(null)}>
+          <LandEditForm land={editLand} />
         </Modal>
       )}
     </div>

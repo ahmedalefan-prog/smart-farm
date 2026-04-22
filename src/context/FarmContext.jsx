@@ -211,6 +211,28 @@ export const FarmProvider = ({ children }) => {
     }));
   };
 
+  const updateFeedIngredient = (id, updates) => {
+    setFarmData(prev => ({
+      ...prev,
+      feedInventory: {
+        ...prev.feedInventory,
+        ingredients: prev.feedInventory.ingredients.map(ing =>
+          ing.id === id ? { ...ing, ...updates } : ing
+        )
+      }
+    }));
+  };
+
+  const deleteFeedIngredient = (id) => {
+    setFarmData(prev => ({
+      ...prev,
+      feedInventory: {
+        ...prev.feedInventory,
+        ingredients: prev.feedInventory.ingredients.filter(ing => ing.id !== id)
+      }
+    }));
+  };
+
   // دوال تحاليل التربة
   const addSoilTest = (test) => {
     setFarmData(prev => ({
@@ -273,6 +295,8 @@ export const FarmProvider = ({ children }) => {
     deleteFishPond,
     addFeedIngredient,
     updateIngredientQuantity,
+    updateFeedIngredient,
+    deleteFeedIngredient,
     addSoilTest,
     addDailyLog,
     importFullData,

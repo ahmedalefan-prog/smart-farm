@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useFarm } from '../context/FarmContext';
 import { colors } from '../theme/theme';
 import Field from './shared/Field';
+import Modal from './shared/Modal';
 
 const recipes = [
   // ============ أبقار ============
@@ -544,9 +545,45 @@ const categoryColors = {
   'أرانب': colors.purple
 };
 
+const IngredientEditForm = ({ ingredient, onSave, onClose }) => {
+  const units = ['كغ', 'طن'];
+  const [f, setF] = useState({
+    name: ingredient.name,
+    quantity: String(ingredient.quantity),
+    unit: ingredient.unit || 'كغ',
+    minThreshold: String(ingredient.minThreshold || '')
+  });
+  const [err, setErr] = useState('');
+  const save = (e) => {
+    e.preventDefault();
+    if (!f.name.trim() || !f.quantity) { setErr('يرجى ملء الاسم والكمية'); return; }
+    onSave(ingredient.id, {
+      name: f.name.trim(),
+      quantity: Number(f.quantity),
+      unit: f.unit,
+      minThreshold: Number(f.minThreshold) || 0
+    });
+    onClose();
+  };
+  return (
+    <form onSubmit={save}>
+      {err && <div style={{ backgroundColor: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '8px', marginBottom: '12px', fontSize: '14px' }}>{err}</div>}
+      <Field label="اسم المادة" value={f.name} onChange={v => { setErr(''); setF(p => ({ ...p, name: v })); }} required />
+      <Field label="الكمية" type="text" inputMode="decimal" unit={f.unit} value={f.quantity} onChange={v => { setErr(''); setF(p => ({ ...p, quantity: v })); }} placeholder="0" required />
+      <Field label="الوحدة" type="select" options={units} value={f.unit} onChange={v => setF(p => ({ ...p, unit: v }))} />
+      <Field label="الحد الأدنى للتنبيه" type="text" inputMode="decimal" unit={f.unit} value={f.minThreshold} onChange={v => setF(p => ({ ...p, minThreshold: v }))} placeholder="0" hint="سيظهر تنبيه عند النقص" />
+      <button type="submit" style={{ width: '100%', padding: '13px', backgroundColor: colors.lime, color: colors.dark, border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', fontFamily: 'inherit', marginTop: '8px' }}>
+        حفظ التعديلات
+      </button>
+    </form>
+  );
+};
+
 const FeedSection = () => {
-  const { farmData } = useFarm();
+  const { farmData, updateFeedIngredient, deleteFeedIngredient } = useFarm();
   const [activeTab, setActiveTab] = useState('inventory');
+  const [editIngredient, setEditIngredient] = useState(null);
+  const [pendingDeleteIngId, setPendingDeleteIngId] = useState(null);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [animalCount, setAnimalCount] = useState('');
   const [days, setDays] = useState(30);
@@ -626,6 +663,7 @@ const FeedSection = () => {
           ) : (
             farmData.feedInventory.ingredients.map(ing => {
               const isLow = ing.minThreshold && ing.quantity <= ing.minThreshold;
+              const isPendingDelete = pendingDeleteIngId === ing.id;
               return (
                 <div key={ing.id} style={{
                   backgroundColor: 'white', padding: '16px', borderRadius: '12px',
@@ -651,6 +689,25 @@ const FeedSection = () => {
                         backgroundColor: isLow ? colors.red : colors.lime,
                         borderRadius: '3px'
                       }} />
+                    </div>
+                  )}
+                  {isPendingDelete ? (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                      <button onClick={() => { deleteFeedIngredient(ing.id); setPendingDeleteIngId(null); }} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: '#dc2626', color: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', fontWeight: 'bold' }}>
+                        ⚠️ تأكيد الحذف
+                      </button>
+                      <button onClick={() => setPendingDeleteIngId(null)} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${colors.sand}`, backgroundColor: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit' }}>
+                        إلغاء
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                      <button onClick={() => setEditIngredient(ing)} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${colors.sand}`, backgroundColor: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: colors.dark }}>
+                        ✏️ تعديل
+                      </button>
+                      <button onClick={() => setPendingDeleteIngId(ing.id)} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: '#fee2e2', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: '#dc2626' }}>
+                        🗑️ حذف
+                      </button>
                     </div>
                   )}
                 </div>
@@ -956,6 +1013,15 @@ const FeedSection = () => {
             </table>
           </div>
         </div>
+      )}
+      {editIngredient && (
+        <Modal title={`تعديل: ${editIngredient.name}`} onClose={() => setEditIngredient(null)}>
+          <IngredientEditForm
+            ingredient={editIngredient}
+            onSave={updateFeedIngredient}
+            onClose={() => setEditIngredient(null)}
+          />
+        </Modal>
       )}
     </div>
   );
