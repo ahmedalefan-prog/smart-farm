@@ -9,6 +9,20 @@ const SettingsSection = ({ onClose }) => {
   const [totalArea, setTotalArea] = useState(farmData.farm.totalArea);
   const [confirmReset, setConfirmReset] = useState(false);
   const [importError, setImportError] = useState('');
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('smartFarmApiKey') || '');
+  const [apiKeySaved, setApiKeySaved] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
+
+  const handleSaveApiKey = () => {
+    const trimmed = apiKey.trim();
+    if (trimmed) {
+      localStorage.setItem('smartFarmApiKey', trimmed);
+    } else {
+      localStorage.removeItem('smartFarmApiKey');
+    }
+    setApiKeySaved(true);
+    setTimeout(() => setApiKeySaved(false), 2000);
+  };
 
   const handleSave = () => {
     setFarmData(prev => ({
@@ -99,6 +113,57 @@ const SettingsSection = ({ onClose }) => {
           📥 استيراد البيانات
           <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
         </label>
+      </div>
+
+      <div style={cardStyle}>
+        <h3 style={{ color: colors.dark, marginBottom: '8px' }}>🤖 المستشار الذكي</h3>
+        <p style={{ color: colors.soil, fontSize: '13px', marginBottom: '14px', lineHeight: '1.6' }}>
+          أدخل مفتاح Anthropic API لتفعيل المستشار الزراعي الذكي. المفتاح محفوظ على جهازك فقط ولا يُرسل لأي خادم آخر.
+        </p>
+        <div style={{ position: 'relative', marginBottom: '10px' }}>
+          <input
+            type={showApiKey ? 'text' : 'password'}
+            value={apiKey}
+            onChange={e => setApiKey(e.target.value)}
+            placeholder="sk-ant-api03-..."
+            style={{
+              width: '100%', padding: '12px', paddingLeft: '48px',
+              border: `1px solid ${colors.sand}`, borderRadius: '8px',
+              fontSize: '13px', fontFamily: 'monospace', boxSizing: 'border-box',
+              outline: 'none'
+            }}
+            dir="ltr"
+          />
+          <button
+            onClick={() => setShowApiKey(s => !s)}
+            style={{
+              position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', padding: '0'
+            }}
+          >{showApiKey ? '🙈' : '👁️'}</button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          <div style={{
+            fontSize: '12px', color: localStorage.getItem('smartFarmApiKey') ? colors.green : colors.orange,
+            fontWeight: 'bold'
+          }}>
+            {localStorage.getItem('smartFarmApiKey') ? '✅ مفتاح مُضاف' : '⚠️ لم يُضف بعد'}
+          </div>
+        </div>
+        <button
+          onClick={handleSaveApiKey}
+          style={{ ...btnStyle(apiKeySaved ? colors.green : colors.teal) }}
+        >
+          {apiKeySaved ? '✅ تم الحفظ' : '💾 حفظ المفتاح'}
+        </button>
+        {!apiKey.trim() && localStorage.getItem('smartFarmApiKey') && (
+          <button
+            onClick={() => { setApiKey(''); localStorage.removeItem('smartFarmApiKey'); setApiKeySaved(false); }}
+            style={{ ...btnStyle(colors.orange), marginTop: '8px' }}
+          >
+            🗑️ حذف المفتاح
+          </button>
+        )}
       </div>
 
       <div style={cardStyle}>

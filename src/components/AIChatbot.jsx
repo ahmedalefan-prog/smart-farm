@@ -2,13 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useFarm } from '../context/FarmContext';
 import { colors } from '../theme/theme';
 
-const AIChatbot = () => {
+const AIChatbot = ({ onOpenSettings }) => {
   const { farmData } = useFarm();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'السلام عليكم. أنا مستشارك الزراعي. كيف يمكنني مساعدتك؟' }
+    { role: 'assistant', text: 'السلام عليكم. أنا مستشارك الزراعي الذكي. كيف يمكنني مساعدتك اليوم؟' }
   ]);
+  const [conversationHistory, setConversationHistory] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
@@ -19,37 +20,115 @@ const AIChatbot = () => {
     }
   }, [messages, isOpen, isMinimized]);
 
-  const buildFarmSummary = () => {
-    const totalCattle = farmData.livestock.cattle.herds.reduce((s, h) => s + (h.count || 0), 0);
-    const totalPoultry = farmData.livestock.poultry.flocks.reduce((s, f) => s + (f.count || 0), 0);
+  const buildSystemPrompt = () => {
+    const cattle = farmData.livestock.cattle.herds.reduce((s, h) => s + (h.count || 0), 0);
+    const sheep = farmData.livestock.sheep.herds.reduce((s, h) => s + (h.count || 0), 0);
+    const poultry = farmData.livestock.poultry.flocks.reduce((s, f) => s + (f.count || 0), 0);
+    const fish = farmData.livestock.fish.ponds.reduce((s, p) => s + (p.fishCount || 0), 0);
     const totalArea = farmData.lands.reduce((s, l) => s + (l.area || 0), 0);
-    return `${totalArea} دونم · ${totalCattle} بقرة · ${totalPoultry} طائر`;
-  };
+    const plantedLands = farmData.lands.filter(l => l.currentCrop);
+    const plantedArea = plantedLands.reduce((s, l) => s + (l.area || 0), 0);
+    const feedKg = farmData.feedInventory.ingredients.reduce((s, ing) => {
+      return s + (ing.unit === 'طن' ? (ing.quantity || 0) * 1000 : (ing.quantity || 0));
+    }, 0);
+    const lastLog = farmData.dailyLogs[farmData.dailyLogs.length - 1];
+    const lastWeather = lastLog
+      ? `${lastLog.weather || 'غير محدد'} / ${lastLog.maxTemp || '--'}°C - ${lastLog.minTemp || '--'}°C`
+      : 'لا يوجد سجل';
+    const landsDesc = farmData.lands.length > 0
+      ? farmData.lands.map(l => `${l.name} (${l.area} دونم${l.currentCrop ? ' - ' + l.currentCrop : ' - بور'})`).join('، ')
+      : 'لا توجد أراضٍ مسجلة';
 
-  const mockResponses = [
-    'بناءً على بيانات مزرعتك، أنصحك بمراقبة استهلاك العلف اليومي.',
-    'الطقس في الأنبار حالياً مناسب للزراعة. راقع درجات الحرارة يومياً.',
-    'من تحليل بيانات القطيع، معدل النمو جيد. استمر على نفس البرنامج الغذائي.',
-    'أنصحك بجدولة الري في الصباح الباكر لتقليل التبخر وتوفير المياه.',
-    'مخزون الأعلاف الحالي يحتاج متابعة - سجّل الكميات يومياً لتتبع الاستهلاك.',
-    'السيلاج خيار ممتاز لتخزين الأعلاف الخضراء. الموسم مناسب للتحضير.'
-  ];
+    return `أنت مستشار زراعي متخصص لمزرعة "${farmData.farm.name}" في جزيرة الخالدية، محافظة الأنبار، العراق (على نهر الفرات).
+
+بيانات المزرعة الحالية:
+- المساحة الكلية: ${farmData.farm.totalArea} دونم، المزروع: ${plantedArea} دونم من ${totalArea} دونم
+- الأراضي: ${landsDesc}
+- الثروة الحيوانية: ${cattle} رأس أبقار | ${sheep} رأس أغنام | ${poultry} طائر دواجن | ${fish} سمكة
+- مخزون الأعلاف: ${feedKg.toFixed(0)} كغ
+- آخر طقس مسجل: ${lastWeather}
+
+قواعد المستشار:
+- أجب بالعربية دائماً
+- ركز على الواقع المحلي (مناخ الأنبار الحار الجاف، التربة الغرينية، نهر الفرات، السوق المحلي)
+- اقتراحات عملية وقابلة للتطبيق الفوري بإمكانيات المزرعة
+- الردود مختصرة ومفيدة (3-6 جمل عادةً)
+- استخدم الأرقام الفعلية من بيانات المزرعة عند الإجابة
+- إذا لم تتوفر بيانات كافية، اطلب من المستخدم إدخالها في القسم المناسب`;
+  };
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
     const userMessage = input.trim();
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
+
+    const newUserMsg = { role: 'user', text: userMessage };
+    setMessages(prev => [...prev, newUserMsg]);
     setLoading(true);
 
-    setTimeout(() => {
+    const apiKey = localStorage.getItem('smartFarmApiKey');
+    if (!apiKey) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        text: mockResponses[Math.floor(Math.random() * mockResponses.length)] +
-              '\n\n(للاستخدام الفعلي: أضف مفتاح Claude API في إعدادات المستشار)'
+        text: '⚠️ لم يتم إضافة مفتاح API بعد.\n\nافتح الإعدادات ← قسم "المستشار الذكي" وأدخل مفتاح Anthropic API للبدء.'
       }]);
       setLoading(false);
-    }, 1200);
+      return;
+    }
+
+    const updatedHistory = [
+      ...conversationHistory,
+      { role: 'user', content: userMessage }
+    ].slice(-20);
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 600,
+          system: buildSystemPrompt(),
+          messages: updatedHistory
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          throw new Error('مفتاح API غير صالح أو منتهي الصلاحية. يرجى التحقق من الإعدادات.');
+        } else if (response.status === 429) {
+          throw new Error('تم تجاوز حد الاستخدام. يرجى الانتظار قليلاً والمحاولة مرة أخرى.');
+        } else {
+          throw new Error(err.error?.message || `خطأ في الاتصال (${response.status})`);
+        }
+      }
+
+      const data = await response.json();
+      const assistantText = data.content?.[0]?.text || 'لم أتمكن من الإجابة. حاول مرة أخرى.';
+
+      setMessages(prev => [...prev, { role: 'assistant', text: assistantText }]);
+      setConversationHistory([
+        ...updatedHistory,
+        { role: 'assistant', content: assistantText }
+      ].slice(-20));
+
+    } catch (err) {
+      const isOffline = !navigator.onLine;
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        text: isOffline
+          ? '📵 لا يوجد اتصال بالإنترنت. يرجى التحقق من الاتصال والمحاولة مرة أخرى.'
+          : `❌ ${err.message}`
+      }]);
+    }
+
+    setLoading(false);
   };
 
   const handleKeyPress = (e) => {
@@ -59,11 +138,31 @@ const AIChatbot = () => {
     }
   };
 
-  const suggestedQuestions = [
-    'كيف أحسن إنتاج الحليب؟',
-    'ما أفضل محصول الآن؟',
-    'هل الري كافٍ؟'
-  ];
+  const handleNewConversation = () => {
+    setMessages([{ role: 'assistant', text: 'محادثة جديدة. كيف يمكنني مساعدتك؟' }]);
+    setConversationHistory([]);
+  };
+
+  const buildFarmSummary = () => {
+    const cattle = farmData.livestock.cattle.herds.reduce((s, h) => s + (h.count || 0), 0);
+    const poultry = farmData.livestock.poultry.flocks.reduce((s, f) => s + (f.count || 0), 0);
+    const totalArea = farmData.lands.reduce((s, l) => s + (l.area || 0), 0);
+    return `${totalArea} دونم · ${cattle} بقرة · ${poultry} طائر`;
+  };
+
+  const getSuggestedQuestions = () => {
+    const questions = ['ما أفضل محصول الآن في الأنبار؟', 'كيف أوفر المياه في الري؟'];
+    const cattle = farmData.livestock.cattle.herds.reduce((s, h) => s + (h.count || 0), 0);
+    const plantedLands = farmData.lands.filter(l => l.currentCrop);
+    if (cattle > 0) questions.unshift('كيف أحسن إنتاج الحليب؟');
+    if (plantedLands.length > 0) {
+      const land = plantedLands[0];
+      questions.unshift(`متى أحصد ${land.currentCrop}؟`);
+    }
+    return questions.slice(0, 3);
+  };
+
+  const hasApiKey = !!localStorage.getItem('smartFarmApiKey');
 
   return (
     <>
@@ -78,7 +177,7 @@ const AIChatbot = () => {
             width: '58px',
             height: '58px',
             borderRadius: '29px',
-            backgroundColor: colors.green,
+            backgroundColor: hasApiKey ? colors.green : colors.orange,
             color: 'white',
             border: 'none',
             fontSize: '26px',
@@ -115,7 +214,7 @@ const AIChatbot = () => {
           {/* رأس النافذة */}
           <div style={{
             padding: '12px 14px',
-            backgroundColor: colors.green,
+            backgroundColor: hasApiKey ? colors.green : colors.orange,
             color: 'white',
             display: 'flex',
             alignItems: 'center',
@@ -124,8 +223,16 @@ const AIChatbot = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '18px' }}>🤖</span>
               <span style={{ fontWeight: 'bold', fontSize: '14px' }}>المستشار الذكي</span>
+              {!hasApiKey && <span style={{ fontSize: '11px', opacity: 0.85 }}>— يحتاج API</span>}
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <button
+                onClick={handleNewConversation}
+                title="محادثة جديدة"
+                style={{ background: 'none', border: 'none', color: 'white', fontSize: '14px', cursor: 'pointer', padding: '2px 5px', opacity: 0.85 }}
+              >
+                🗑️
+              </button>
               <button
                 onClick={() => setIsMinimized(!isMinimized)}
                 style={{ background: 'none', border: 'none', color: 'white', fontSize: '16px', cursor: 'pointer', padding: '2px 6px' }}
@@ -153,6 +260,27 @@ const AIChatbot = () => {
               }}>
                 📋 {buildFarmSummary()}
               </div>
+
+              {/* تحذير بدون API */}
+              {!hasApiKey && (
+                <div style={{
+                  padding: '10px 14px',
+                  backgroundColor: '#fff7ed',
+                  borderBottom: `1px solid ${colors.sand}`,
+                  fontSize: '12px',
+                  color: colors.orange,
+                  lineHeight: '1.5'
+                }}>
+                  ⚠️ أضف مفتاح API في{' '}
+                  <button
+                    onClick={() => { setIsOpen(false); onOpenSettings?.(); }}
+                    style={{ background: 'none', border: 'none', color: colors.green, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'inherit', fontSize: '12px', padding: 0, textDecoration: 'underline' }}
+                  >
+                    الإعدادات
+                  </button>
+                  {' '}لتفعيل المستشار
+                </div>
+              )}
 
               {/* منطقة المحادثة */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '10px 12px', backgroundColor: colors.cream }}>
@@ -201,7 +329,7 @@ const AIChatbot = () => {
                 overflowX: 'auto',
                 borderTop: `1px solid ${colors.sand}`
               }}>
-                {suggestedQuestions.map((q, i) => (
+                {getSuggestedQuestions().map((q, i) => (
                   <button
                     key={i}
                     onClick={() => setInput(q)}

@@ -37,7 +37,8 @@ const CircularFlow = () => {
     }, 0);
     const fishWaterForIrrigation = fishWaterVolume * 0.1;
 
-    const totalWaterUsed = recentLogs.length > 0 && recentLogs[0]?.irrigationDone ? totalCropArea * 5000 : 0;
+    const lastLog = farmData.dailyLogs[farmData.dailyLogs.length - 1];
+    const totalWaterUsed = lastLog?.irrigationDone ? totalCropArea * 5000 : 0;
     const waterProductivity = totalWaterUsed > 0 ? (totalCropArea / (totalWaterUsed / 1000)).toFixed(2) : 0;
 
     return {

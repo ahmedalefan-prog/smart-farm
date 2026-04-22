@@ -128,7 +128,7 @@ const AppContent = () => {
       </main>
 
       {/* المستشار الذكي العائم */}
-      <AIChatbot />
+      <AIChatbot onOpenSettings={() => setShowSettings(true)} />
 
       {/* زر الإضافة العائم */}
       <div style={{ position: 'fixed', bottom: activeSubSection ? '20px' : '80px', left: '16px', zIndex: 999 }}>

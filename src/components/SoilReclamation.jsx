@@ -204,14 +204,14 @@ const SoilReclamation = () => {
           <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', marginBottom: '16px' }}>
             <h3 style={{ color: colors.dark, marginBottom: '16px' }}>أدخل نتائج تحليل التربة</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0 16px' }}>
-              <Field label="pH الرقم الهيدروجيني" type="number" value={soilInputs.ph} onChange={v => set('ph', v)} hint="المثالي: 6-8" />
-              <Field label="الملوحة EC (ديسي/م)" type="number" value={soilInputs.ec} onChange={v => set('ec', v)} hint="المثالي: أقل من 2" />
-              <Field label="نيتروجين N (ppm)" type="number" value={soilInputs.n} onChange={v => set('n', v)} />
-              <Field label="فوسفور P (ppm)" type="number" value={soilInputs.p} onChange={v => set('p', v)} />
-              <Field label="بوتاسيوم K (ppm)" type="number" value={soilInputs.k} onChange={v => set('k', v)} />
-              <Field label="مادة عضوية (%)" type="number" value={soilInputs.organicMatter} onChange={v => set('organicMatter', v)} hint="المثالي: أكثر من 2%" />
+              <Field label="pH الرقم الهيدروجيني" type="text" inputMode="decimal" value={soilInputs.ph} onChange={v => set('ph', v)} hint="المثالي: 6-8" />
+              <Field label="الملوحة EC (ديسي/م)" type="text" inputMode="decimal" value={soilInputs.ec} onChange={v => set('ec', v)} hint="المثالي: أقل من 2" />
+              <Field label="نيتروجين N (ppm)" type="text" inputMode="decimal" value={soilInputs.n} onChange={v => set('n', v)} />
+              <Field label="فوسفور P (ppm)" type="text" inputMode="decimal" value={soilInputs.p} onChange={v => set('p', v)} />
+              <Field label="بوتاسيوم K (ppm)" type="text" inputMode="decimal" value={soilInputs.k} onChange={v => set('k', v)} />
+              <Field label="مادة عضوية (%)" type="text" inputMode="decimal" value={soilInputs.organicMatter} onChange={v => set('organicMatter', v)} hint="المثالي: أكثر من 2%" />
               <Field label="نوع التربة" type="select" options={['رملية', 'غرينية', 'طينية', 'مختلطة']} value={soilInputs.soilType} onChange={v => set('soilType', v)} />
-              <Field label="المساحة (هكتار)" type="number" value={soilInputs.area} onChange={v => set('area', v)} />
+              <Field label="المساحة (هكتار)" type="text" inputMode="decimal" value={soilInputs.area} onChange={v => set('area', v)} />
             </div>
           </div>
 
@@ -271,8 +271,8 @@ const SoilReclamation = () => {
         <div>
           <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', marginBottom: '16px' }}>
             <h3 style={{ color: colors.dark, marginBottom: '16px' }}>💧 حاسبة مياه الغسيل</h3>
-            <Field label="الملوحة EC (ديسي/م)" type="number" value={soilInputs.ec} onChange={v => set('ec', v)} />
-            <Field label="المساحة (هكتار)" type="number" value={soilInputs.area} onChange={v => set('area', v)} />
+            <Field label="الملوحة EC (ديسي/م)" type="text" inputMode="decimal" value={soilInputs.ec} onChange={v => set('ec', v)} />
+            <Field label="المساحة (هكتار)" type="text" inputMode="decimal" value={soilInputs.area} onChange={v => set('area', v)} />
 
             {leachingCalc ? (
               <div style={{ marginTop: '16px', padding: '16px', backgroundColor: colors.orange + '18', borderRadius: '8px' }}>
