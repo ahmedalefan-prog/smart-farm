@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(npx vite *)",
+      "Bash(npm install *)",
+      "Bash(node generate-icons.js)",
+      "Bash(mv generate-icons.js generate-icons.cjs)",
+      "Bash(node generate-icons.cjs)",
+      "Bash(npx surge *)",
+      "Bash(npx localtunnel *)",
+      "Bash(gh auth *)",
+      "Bash(git --version)",
+      "Bash(git -C \"C:/Users/ahmed/smart-farm\" status)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git config *)"
+    ]
+  }
+}
