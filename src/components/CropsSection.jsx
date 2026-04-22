@@ -32,8 +32,8 @@ const CropsSection = () => {
     if (!land) return;
 
     const plantingDate = new Date().toISOString().split('T')[0];
-    const daysRange = selectedCrop.daysToHarvest.split('-').map(d => parseInt(d));
-    const avgDays = daysRange.length === 2 ? (daysRange[0] + daysRange[1]) / 2 : parseInt(daysRange[0]);
+    const daysNums = (selectedCrop.daysToHarvest || '').split('-').map(d => parseInt(d)).filter(n => !isNaN(n));
+    const avgDays = daysNums.length >= 2 ? (daysNums[0] + daysNums[1]) / 2 : daysNums[0] || 60;
     const harvestDate = new Date(Date.now() + avgDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     const previousCrop = land.currentCrop;

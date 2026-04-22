@@ -233,7 +233,7 @@ export const cropsData = [
     category: 'أعلاف',
     soilEffect: 'يضيف 100-200 كغ نيتروجين/هكتار',
     season: 'دائم',
-    daysToHarvest: 'متعدد القصات كل 25-30 يوم',
+    daysToHarvest: '25-30',
     yieldPerHa: '15-25 طن/سنة',
     waterNeeds: 'عالية',
     stages: [
