@@ -529,11 +529,41 @@ const recipes = [
 ];
 
 const tabs = [
-  { id: 'inventory', name: '📦 المخزون', color: colors.lime },
-  { id: 'recipes', name: '📋 الوصفات', color: colors.teal },
-  { id: 'calculator', name: '🧮 الحاسبة', color: colors.wheat },
-  { id: 'silage', name: '🌽 السيلاج', color: colors.green }
+  { id: 'inventory',  name: '📦 المخزون',    color: colors.lime },
+  { id: 'recipes',    name: '📋 الوصفات',    color: colors.teal },
+  { id: 'calculator', name: '🧮 الحاسبة',    color: colors.wheat },
+  { id: 'silage',     name: '🌽 السيلاج',    color: colors.green },
+  { id: 'local',      name: '🌱 إنتاج محلي', color: colors.orange },
+  { id: 'manure',     name: '♻️ السماد',     color: colors.soil }
 ];
+
+// إنتاجية كل محصول كعلف (كغ/دونم)
+const feedCropData = {
+  'قمح':    { icon: '🌾', products: [{ name: 'تبن قمح', kg: 1200, tdn: 45, protein: 3.5, for: 'أبقار، أغنام — علف خشن' }] },
+  'شعير':   { icon: '🌾', products: [
+    { name: 'حبوب شعير',  kg: 300,  tdn: 83, protein: 12, for: 'كل الحيوانات — علف مركز' },
+    { name: 'تبن شعير',   kg: 800,  tdn: 43, protein: 4,  for: 'أبقار، أغنام' }
+  ]},
+  'ذرة':    { icon: '🌽', products: [
+    { name: 'سيلاج ذرة كامل', kg: 8000, tdn: 68, protein: 8,  for: 'أبقار، أغنام — أفضل سيلاج' },
+    { name: 'حبوب ذرة',       kg: 600,  tdn: 88, protein: 9,  for: 'كل الحيوانات — علف مركز أساسي' },
+    { name: 'حطب + قصب',      kg: 2000, tdn: 48, protein: 5,  for: 'أبقار، أغنام بعد تقطيع' }
+  ]},
+  'برسيم':  { icon: '🌿', products: [
+    { name: 'برسيم أخضر',  kg: 4000, tdn: 60, protein: 18, for: 'كل الحيوانات — أفضل علف أخضر' },
+    { name: 'دريس برسيم',  kg: 800,  tdn: 55, protein: 16, for: 'كل الحيوانات — علف خشن محسّن' }
+  ]},
+  'جت':     { icon: '🌿', products: [
+    { name: 'جت أخضر',    kg: 5000, tdn: 58, protein: 20, for: 'أبقار، أغنام — الأعلى بروتيناً' },
+    { name: 'دريس جت',    kg: 1000, tdn: 52, protein: 18, for: 'كل الحيوانات' }
+  ]},
+  'سورغم':  { icon: '🌱', products: [
+    { name: 'سورغم أخضر', kg: 6000, tdn: 55, protein: 9,  for: 'أبقار، أغنام' },
+    { name: 'سيلاج سورغم',kg: 5500, tdn: 58, protein: 8,  for: 'أبقار، أغنام' }
+  ]},
+  'دخن':    { icon: '🌾', products: [{ name: 'دخن أخضر', kg: 5000, tdn: 53, protein: 10, for: 'أبقار، أغنام، دواجن' }] },
+  'بقوليات':{ icon: '🫘', products: [{ name: 'تبن بقوليات', kg: 1000, tdn: 50, protein: 14, for: 'أبقار، أغنام — علف خشن غني' }] },
+};
 
 const categories = ['الكل', 'أبقار', 'أغنام', 'دواجن', 'أسماك', 'أرانب'];
 
@@ -589,6 +619,7 @@ const FeedSection = () => {
   const [days, setDays] = useState(30);
   const [selectedCategory, setSelectedCategory] = useState('الكل');
   const [expandedRecipe, setExpandedRecipe] = useState(null);
+  const [cropAreas, setCropAreas] = useState({});
 
   const totalKg = farmData.feedInventory.ingredients.reduce((sum, ing) => {
     return sum + (ing.unit === 'طن' ? ing.quantity * 1000 : ing.quantity);
@@ -1014,6 +1045,320 @@ const FeedSection = () => {
           </div>
         </div>
       )}
+      {/* إنتاج محلي */}
+      {activeTab === 'local' && (() => {
+        const landedAreas = {};
+        farmData.lands.forEach(l => {
+          if (l.cropType && feedCropData[l.cropType]) {
+            landedAreas[l.cropType] = (landedAreas[l.cropType] || 0) + (Number(l.area) || 0);
+          }
+        });
+
+        const totalProduction = {};
+        Object.entries(feedCropData).forEach(([crop, info]) => {
+          const area = Number(cropAreas[crop] !== undefined ? cropAreas[crop] : (landedAreas[crop] || 0));
+          if (area > 0) {
+            info.products.forEach(p => {
+              if (!totalProduction[p.name]) totalProduction[p.name] = { ...p, totalKg: 0 };
+              totalProduction[p.name].totalKg += area * p.kg;
+            });
+          }
+        });
+
+        const cattleCount = farmData.livestock.cattle.herds.reduce((s, h) => s + (h.count || 0), 0);
+        const sheepCount = farmData.livestock.sheep.herds.reduce((s, h) => s + (h.count || 0), 0);
+        const poultryCount = farmData.livestock.poultry.flocks.reduce((s, f) => s + (f.count || 0), 0);
+        const annualNeeds = (cattleCount * 15 + sheepCount * 1.5 + poultryCount * 0.1) * 365;
+        const totalLocalKg = Object.values(totalProduction).reduce((s, p) => s + p.totalKg, 0);
+        const selfSufficiency = annualNeeds > 0 ? Math.min(100, (totalLocalKg / annualNeeds) * 100).toFixed(0) : 0;
+
+        return (
+          <div>
+            <div style={{ backgroundColor: colors.green + '20', padding: '16px', borderRadius: '12px', marginBottom: '20px' }}>
+              <h3 style={{ color: colors.dark, margin: '0 0 6px' }}>🌱 الإنتاج العلفي المحلي</h3>
+              <p style={{ color: colors.soil, margin: 0, fontSize: '13px' }}>
+                أدخل مساحة كل محصول لتقدير الإنتاج العلفي — البيانات المسجلة في الأراضي تُملأ تلقائياً
+              </p>
+            </div>
+
+            <h4 style={{ color: colors.dark, marginBottom: '12px' }}>المساحات المزروعة (دونم)</h4>
+            {Object.entries(feedCropData).map(([cropName, cropInfo]) => {
+              const autoArea = landedAreas[cropName];
+              const displayArea = cropAreas[cropName] !== undefined ? cropAreas[cropName] : (autoArea || '');
+              return (
+                <div key={cropName} style={{
+                  backgroundColor: 'white', padding: '12px 14px', borderRadius: '10px',
+                  marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px'
+                }}>
+                  <span style={{ fontSize: '20px' }}>{cropInfo.icon}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '14px', color: colors.dark }}>{cropName}</div>
+                    {autoArea > 0 && (
+                      <div style={{ fontSize: '11px', color: colors.green }}>🔗 من الأراضي: {autoArea} دونم</div>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={displayArea}
+                    onChange={e => setCropAreas(prev => ({ ...prev, [cropName]: e.target.value }))}
+                    placeholder="0"
+                    style={{
+                      width: '70px', padding: '8px', borderRadius: '6px',
+                      border: `1px solid ${colors.sand}`, textAlign: 'center',
+                      fontSize: '14px', fontFamily: 'inherit'
+                    }}
+                  />
+                  <span style={{ fontSize: '12px', color: colors.soil, minWidth: '30px' }}>دونم</span>
+                </div>
+              );
+            })}
+
+            {Object.keys(totalProduction).length > 0 ? (
+              <div style={{ marginTop: '24px' }}>
+                <h4 style={{ color: colors.dark, marginBottom: '12px' }}>📊 المنتجات العلفية المتوقعة (كغ/موسم)</h4>
+                {Object.values(totalProduction).map(prod => (
+                  <div key={prod.name} style={{
+                    backgroundColor: 'white', padding: '12px 14px', borderRadius: '10px',
+                    marginBottom: '8px', borderRight: `4px solid ${colors.green}`
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: 'bold', color: colors.dark, fontSize: '14px' }}>{prod.name}</div>
+                        <div style={{ fontSize: '11px', color: colors.soil, marginTop: '2px' }}>
+                          TDN: {prod.tdn}% · بروتين: {prod.protein}% · {prod.for}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontWeight: 'bold', color: colors.green, fontSize: '18px' }}>
+                          {(prod.totalKg / 1000).toFixed(1)} طن
+                        </div>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>{prod.totalKg.toLocaleString()} كغ</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {(cattleCount + sheepCount + poultryCount) > 0 && (
+                  <div style={{ backgroundColor: colors.gold + '25', padding: '16px', borderRadius: '12px', marginTop: '16px' }}>
+                    <h4 style={{ color: colors.dark, marginBottom: '12px' }}>⚖️ مقارنة مع احتياجات القطعان</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                      <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>الإنتاج المحلي</div>
+                        <div style={{ fontSize: '20px', fontWeight: 'bold', color: colors.green }}>{(totalLocalKg / 1000).toFixed(1)} طن</div>
+                      </div>
+                      <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>الحاجة السنوية (تقديري)</div>
+                        <div style={{ fontSize: '20px', fontWeight: 'bold', color: colors.soil }}>{(annualNeeds / 1000).toFixed(1)} طن</div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '13px', color: colors.soil, marginBottom: '6px' }}>نسبة الاكتفاء الذاتي</div>
+                      <div style={{ fontSize: '36px', fontWeight: 'bold', color: Number(selfSufficiency) >= 50 ? colors.green : colors.orange }}>
+                        {selfSufficiency}%
+                      </div>
+                      <div style={{ height: '8px', backgroundColor: colors.sand, borderRadius: '4px', marginTop: '8px' }}>
+                        <div style={{
+                          width: `${selfSufficiency}%`, height: '100%',
+                          backgroundColor: Number(selfSufficiency) >= 50 ? colors.green : colors.orange,
+                          borderRadius: '4px', transition: 'width 0.5s'
+                        }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '30px', color: colors.soil, marginTop: '16px' }}>
+                <p style={{ fontSize: '32px', margin: '0 0 10px' }}>🌾</p>
+                <p style={{ margin: 0 }}>أدخل مساحات المحاصيل أعلاه لرؤية تقدير الإنتاج العلفي</p>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* السماد */}
+      {activeTab === 'manure' && (() => {
+        const cattleCount = farmData.livestock.cattle.herds.reduce((s, h) => s + (h.count || 0), 0);
+        const sheepCount = farmData.livestock.sheep.herds.reduce((s, h) => s + (h.count || 0), 0);
+        const poultryCount = farmData.livestock.poultry.flocks.reduce((s, f) => s + (f.count || 0), 0);
+
+        const dailyCattleManure = cattleCount * 25;
+        const dailySheepManure = sheepCount * 2.5;
+        const dailyPoultryManure = poultryCount * 0.15;
+        const dailyTotal = dailyCattleManure + dailySheepManure + dailyPoultryManure;
+        const annualManure = dailyTotal * 365;
+        const annualCompost = annualManure * 0.4;
+
+        const dailyBiogas = dailyCattleManure * 0.045 + dailySheepManure * 0.035 + dailyPoultryManure * 0.08;
+
+        const nitrogenKg = annualCompost * 0.02;
+        const phosphorusKg = annualCompost * 0.015;
+        const potassiumKg = annualCompost * 0.015;
+
+        return (
+          <div>
+            <div style={{ backgroundColor: colors.soil + '15', padding: '16px', borderRadius: '12px', marginBottom: '20px' }}>
+              <h3 style={{ color: colors.dark, margin: '0 0 6px' }}>♻️ السماد والطاقة الحيوية</h3>
+              <p style={{ color: colors.soil, margin: 0, fontSize: '13px' }}>
+                استثمر مخلفات حيواناتك كسماد عضوي وغاز حيوي — تقليل التكاليف وتحسين خصوبة التربة
+              </p>
+            </div>
+
+            {(cattleCount + sheepCount + poultryCount) === 0 ? (
+              <div style={{ textAlign: 'center', padding: '30px', color: colors.soil }}>
+                <p style={{ fontSize: '32px', margin: '0 0 10px' }}>🐄</p>
+                <p style={{ margin: 0 }}>أضف حيواناتك أولاً لحساب إنتاج السماد</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ backgroundColor: 'white', padding: '14px', borderRadius: '12px', marginBottom: '16px' }}>
+                  <h4 style={{ color: colors.dark, marginBottom: '10px', fontSize: '14px' }}>القطعان المحسوبة</h4>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {cattleCount > 0 && (
+                      <div style={{ textAlign: 'center', backgroundColor: colors.soil + '15', padding: '10px 16px', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '22px' }}>🐄</div>
+                        <div style={{ fontWeight: 'bold', color: colors.dark }}>{cattleCount} رأس</div>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>أبقار</div>
+                      </div>
+                    )}
+                    {sheepCount > 0 && (
+                      <div style={{ textAlign: 'center', backgroundColor: colors.green + '15', padding: '10px 16px', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '22px' }}>🐑</div>
+                        <div style={{ fontWeight: 'bold', color: colors.dark }}>{sheepCount} رأس</div>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>أغنام</div>
+                      </div>
+                    )}
+                    {poultryCount > 0 && (
+                      <div style={{ textAlign: 'center', backgroundColor: colors.orange + '15', padding: '10px 16px', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '22px' }}>🐔</div>
+                        <div style={{ fontWeight: 'bold', color: colors.dark }}>{poultryCount} طائر</div>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>دواجن</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: 'white', padding: '14px', borderRadius: '12px', marginBottom: '16px' }}>
+                  <h4 style={{ color: colors.dark, marginBottom: '12px', fontSize: '14px' }}>💩 إنتاج السماد الخام</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '12px' }}>
+                    {[
+                      { label: 'يومي', value: dailyTotal.toFixed(0), unit: 'كغ/يوم' },
+                      { label: 'شهري', value: (dailyTotal * 30 / 1000).toFixed(1), unit: 'طن/شهر' },
+                      { label: 'سنوي', value: (annualManure / 1000).toFixed(1), unit: 'طن/سنة' }
+                    ].map(item => (
+                      <div key={item.label} style={{ textAlign: 'center', backgroundColor: colors.cream, padding: '10px', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>{item.label}</div>
+                        <div style={{ fontSize: '20px', fontWeight: 'bold', color: colors.dark }}>{item.value}</div>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>{item.unit}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ borderTop: `1px solid ${colors.sand}`, paddingTop: '10px' }}>
+                    {cattleCount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '3px 0', color: colors.soil }}>
+                        <span>🐄 {cattleCount} بقرة × 25 كغ/رأس/يوم</span>
+                        <strong style={{ color: colors.dark }}>{dailyCattleManure.toFixed(0)} كغ/يوم</strong>
+                      </div>
+                    )}
+                    {sheepCount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '3px 0', color: colors.soil }}>
+                        <span>🐑 {sheepCount} نعجة × 2.5 كغ/رأس/يوم</span>
+                        <strong style={{ color: colors.dark }}>{dailySheepManure.toFixed(0)} كغ/يوم</strong>
+                      </div>
+                    )}
+                    {poultryCount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '3px 0', color: colors.soil }}>
+                        <span>🐔 {poultryCount} طائر × 0.15 كغ/طائر/يوم</span>
+                        <strong style={{ color: colors.dark }}>{dailyPoultryManure.toFixed(1)} كغ/يوم</strong>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: 'white', padding: '14px', borderRadius: '12px', marginBottom: '16px' }}>
+                  <h4 style={{ color: colors.green, marginBottom: '12px', fontSize: '14px' }}>🌱 الكمبوست (سماد مخمّر)</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                    <div style={{ backgroundColor: colors.green + '15', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '11px', color: colors.soil }}>الإنتاج السنوي</div>
+                      <div style={{ fontSize: '22px', fontWeight: 'bold', color: colors.green }}>{(annualCompost / 1000).toFixed(1)} طن</div>
+                      <div style={{ fontSize: '11px', color: colors.soil }}>بعد 60-90 يوم تخمير</div>
+                    </div>
+                    <div style={{ backgroundColor: colors.lime + '20', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '11px', color: colors.soil }}>معدل التحويل</div>
+                      <div style={{ fontSize: '22px', fontWeight: 'bold', color: colors.lime }}>40%</div>
+                      <div style={{ fontSize: '11px', color: colors.soil }}>من وزن السماد الخام</div>
+                    </div>
+                  </div>
+                  <div style={{ backgroundColor: colors.cream, padding: '10px', borderRadius: '8px', fontSize: '12px', color: colors.soil }}>
+                    <strong style={{ color: colors.dark, display: 'block', marginBottom: '4px' }}>خطوات التسميد:</strong>
+                    <ol style={{ margin: 0, paddingRight: '16px', lineHeight: '1.9' }}>
+                      <li>جمع المخلفات يومياً في حفرة مخصصة</li>
+                      <li>خلطها مع بقايا النباتات (تبن، قش) بنسبة 2:1</li>
+                      <li>رطّب المزيج وقلّبه كل 2-3 أسابيع</li>
+                      <li>بعد 60-90 يوم يصبح سماداً ناضجاً ذا رائحة ترابية</li>
+                    </ol>
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: 'white', padding: '14px', borderRadius: '12px', marginBottom: '16px' }}>
+                  <h4 style={{ color: colors.wheat, marginBottom: '12px', fontSize: '14px' }}>🧪 القيمة السمادية (NPK سنوياً)</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '10px' }}>
+                    {[
+                      { label: 'نيتروجين (N)', value: nitrogenKg.toFixed(0), color: colors.sky },
+                      { label: 'فوسفور (P)', value: phosphorusKg.toFixed(0), color: colors.orange },
+                      { label: 'بوتاسيوم (K)', value: potassiumKg.toFixed(0), color: colors.lime }
+                    ].map(item => (
+                      <div key={item.label} style={{ backgroundColor: item.color + '15', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '10px', color: colors.soil, marginBottom: '4px' }}>{item.label}</div>
+                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: item.color }}>{item.value}</div>
+                        <div style={{ fontSize: '10px', color: colors.soil }}>كغ/سنة</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ backgroundColor: colors.gold + '20', padding: '10px', borderRadius: '8px', fontSize: '12px', color: colors.soil }}>
+                    💡 هذا الكمبوست يُعادل شراء سماد اليوريا والسوبر فوسفات والبوتاسيوم الكيميائي — توفير كبير في التكاليف
+                  </div>
+                </div>
+
+                {dailyBiogas >= 0.5 && (
+                  <div style={{ backgroundColor: 'white', padding: '14px', borderRadius: '12px', marginBottom: '16px' }}>
+                    <h4 style={{ color: '#7c3aed', marginBottom: '12px', fontSize: '14px' }}>⚡ الغاز الحيوي (Biogas)</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                      <div style={{ backgroundColor: '#7c3aed15', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>إنتاج يومي</div>
+                        <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#7c3aed' }}>{dailyBiogas.toFixed(1)} م³</div>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>≈ {(dailyBiogas * 0.5).toFixed(0)} ساعات طبخ</div>
+                      </div>
+                      <div style={{ backgroundColor: '#7c3aed10', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>إنتاج شهري</div>
+                        <div style={{ fontSize: '22px', fontWeight: 'bold', color: '#7c3aed' }}>{(dailyBiogas * 30).toFixed(0)} م³</div>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>≈ {(dailyBiogas * 30 * 6).toFixed(0)} ك.و.س</div>
+                      </div>
+                    </div>
+                    <div style={{ backgroundColor: colors.cream, padding: '10px', borderRadius: '8px', fontSize: '12px', color: colors.soil }}>
+                      ⚠️ الأرقام تقديرية عند درجة حرارة مثالية (30-35°م). 1 م³ غاز حيوي ≈ 0.6 لتر غاز مضغوط ≈ 6 ك.و.س طاقة.
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ backgroundColor: colors.sky + '15', padding: '14px', borderRadius: '12px' }}>
+                  <h4 style={{ color: colors.sky, marginBottom: '10px', fontSize: '14px' }}>🔄 نصائح الدمج مع المزرعة</h4>
+                  <ul style={{ paddingRight: '18px', color: colors.soil, lineHeight: '2', margin: 0, fontSize: '13px' }}>
+                    <li>خصص منطقة تسميد قريبة من الحظائر لتقليل نقل المخلفات</li>
+                    <li>استخدم الكمبوست الناضج في أراضي البرسيم والجت</li>
+                    <li>الكمبوست يحسن بنية التربة الرملية ويزيد احتباس الماء</li>
+                    <li>فضلات الدواجن أعلى بروتيناً — مناسبة للمحاصيل الخضراء</li>
+                    <li>لا تستخدم السماد الخام مباشرة — انتظر التخمير الكامل</li>
+                  </ul>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })()}
+
       {editIngredient && (
         <Modal title={`تعديل: ${editIngredient.name}`} onClose={() => setEditIngredient(null)}>
           <IngredientEditForm
