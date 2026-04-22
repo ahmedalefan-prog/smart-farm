@@ -138,7 +138,7 @@ const MainNavigation = ({
       {showSubMenu && !activeSubSection && currentSection && (
         <div style={{
           position: 'fixed',
-          top: '56px',
+          top: 'calc(56px + env(safe-area-inset-top, 0px))',
           left: 0,
           right: 0,
           backgroundColor: 'white',

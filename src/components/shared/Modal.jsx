@@ -27,8 +27,7 @@ const Modal = ({ title, onClose, children }) => {
           width: '90%',
           maxHeight: '80vh',
           overflowY: 'scroll',
-          WebkitOverflowScrolling: 'touch',
-          transform: 'translateZ(0)'
+          WebkitOverflowScrolling: 'touch'
         }}
         onClick={(e) => e.stopPropagation()}
       >
