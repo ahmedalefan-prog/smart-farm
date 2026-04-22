@@ -92,7 +92,7 @@ button, select, input, textarea {
 }
 
 /* إصلاح الإدخال على iOS PWA */
-input, select, textarea {
+input, textarea {
   font-size: 16px !important;
   -webkit-user-select: text !important;
   user-select: text !important;
@@ -100,6 +100,15 @@ input, select, textarea {
   -webkit-appearance: none;
   border-radius: 8px;
   opacity: 1;
+}
+
+/* select يحتاج معالجة مختلفة — لا نلغي appearance لأنه يكسر الـ picker على iOS */
+select {
+  font-size: 16px !important;
+  touch-action: manipulation;
+  opacity: 1;
+  background-color: white;
+  color: inherit;
 }
 
 button:active {
