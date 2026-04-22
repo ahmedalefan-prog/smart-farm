@@ -12,7 +12,8 @@ const Field = ({
   min,
   max,
   required = false,
-  placeholder
+  placeholder,
+  inputMode
 }) => {
   const inputId = `field-${label?.replace(/\s+/g, '-') || 'input'}`;
 
@@ -49,8 +50,9 @@ const Field = ({
         <input
           id={inputId}
           type={type}
+          inputMode={inputMode}
           value={value === 0 ? '0' : value || ''}
-          onChange={(e) => onChange(type === 'number' ? e.target.value : e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           min={min}
           max={max}
           placeholder={placeholder}

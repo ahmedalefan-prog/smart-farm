@@ -11,6 +11,7 @@ const CropsSection = () => {
   const [selectedCrop, setSelectedCrop] = useState(null);
   const [showPlantModal, setShowPlantModal] = useState(false);
   const [selectedLand, setSelectedLand] = useState('');
+  const [notification, setNotification] = useState(null);
 
   const categories = ['الكل', 'حبوب', 'أعلاف', 'بقوليات', 'درنات'];
 
@@ -20,44 +21,64 @@ const CropsSection = () => {
     return matchesSearch && matchesCategory;
   });
 
+  const notify = (msg, type = 'success') => {
+    setNotification({ msg, type });
+    setTimeout(() => setNotification(null), 3500);
+  };
+
   const handlePlantCrop = () => {
-    if (selectedLand && selectedCrop) {
-      const land = farmData.lands.find(l => l.id === selectedLand);
+    if (!selectedLand || !selectedCrop) return;
+    const land = farmData.lands.find(l => l.id === selectedLand);
+    if (!land) return;
 
-      if (land.cropHistory && land.cropHistory.length > 0) {
-        const lastCrop = land.cropHistory[land.cropHistory.length - 1];
-        if (selectedCrop.avoidAfter && selectedCrop.avoidAfter.includes(lastCrop)) {
-          alert(`⚠️ تحذير: لا ينصح بزراعة ${selectedCrop.name} بعد ${lastCrop}. قد يؤدي ذلك إلى أمراض التربة وانخفاض الإنتاج.`);
-        } else if (selectedCrop.goodAfter && selectedCrop.goodAfter.includes(lastCrop)) {
-          alert(`✅ ممتاز! ${selectedCrop.name} مناسب جداً للزراعة بعد ${lastCrop}.`);
-        }
+    const plantingDate = new Date().toISOString().split('T')[0];
+    const daysRange = selectedCrop.daysToHarvest.split('-').map(d => parseInt(d));
+    const avgDays = daysRange.length === 2 ? (daysRange[0] + daysRange[1]) / 2 : parseInt(daysRange[0]);
+    const harvestDate = new Date(Date.now() + avgDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const previousCrop = land.currentCrop;
+    const updatedHistory = [...(land.cropHistory || [])];
+    if (previousCrop) updatedHistory.push(previousCrop);
+
+    updateLand(selectedLand, {
+      currentCrop: selectedCrop.name,
+      plantingDate,
+      expectedHarvest: harvestDate,
+      cropHistory: updatedHistory
+    });
+
+    setShowPlantModal(false);
+    setSelectedCrop(null);
+    setSelectedLand('');
+
+    if (land.cropHistory && land.cropHistory.length > 0) {
+      const lastCrop = land.cropHistory[land.cropHistory.length - 1];
+      if (selectedCrop.avoidAfter && selectedCrop.avoidAfter.includes(lastCrop)) {
+        notify(`⚠️ تم الحفظ — لكن تجنب ${selectedCrop.name} بعد ${lastCrop} في المستقبل`, 'warning');
+      } else if (selectedCrop.goodAfter && selectedCrop.goodAfter.includes(lastCrop)) {
+        notify(`✅ ممتاز! ${selectedCrop.name} مناسب بعد ${lastCrop}`);
+      } else {
+        notify(`✅ تم زراعة ${selectedCrop.name} بنجاح`);
       }
-
-      const plantingDate = new Date().toISOString().split('T')[0];
-      const daysRange = selectedCrop.daysToHarvest.split('-').map(d => parseInt(d));
-      const avgDays = daysRange.length === 2 ? (daysRange[0] + daysRange[1]) / 2 : parseInt(daysRange[0]);
-      const harvestDate = new Date(Date.now() + avgDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-      const previousCrop = land.currentCrop;
-      const updatedHistory = [...(land.cropHistory || [])];
-      if (previousCrop) updatedHistory.push(previousCrop);
-
-      updateLand(selectedLand, {
-        currentCrop: selectedCrop.name,
-        plantingDate,
-        expectedHarvest: harvestDate,
-        cropHistory: updatedHistory
-      });
-
-      alert(`تم زراعة ${selectedCrop.name} في القطعة المحددة`);
-      setShowPlantModal(false);
-      setSelectedCrop(null);
-      setSelectedLand('');
+    } else {
+      notify(`✅ تم زراعة ${selectedCrop.name} بنجاح`);
     }
   };
 
   return (
     <div style={{ padding: '20px' }}>
+      {notification && (
+        <div style={{
+          position: 'fixed', top: 'calc(64px + env(safe-area-inset-top, 0px))',
+          right: '16px', left: '16px', zIndex: 2000,
+          backgroundColor: notification.type === 'warning' ? colors.gold : colors.green,
+          color: 'white', padding: '14px 16px', borderRadius: '10px',
+          fontSize: '14px', boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          textAlign: 'center'
+        }}>
+          {notification.msg}
+        </div>
+      )}
       <h2 style={{ color: colors.dark, marginBottom: '20px' }}>🌾 المحاصيل الزراعية</h2>
 
       {/* الأراضي المزروعة */}

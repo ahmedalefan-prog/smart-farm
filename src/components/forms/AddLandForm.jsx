@@ -41,11 +41,12 @@ const AddLandForm = ({ onSuccess }) => {
       />
       <Field
         label="المساحة"
-        type="number"
+        type="text"
+        inputMode="decimal"
         unit="دونم"
         value={formData.area}
         onChange={(val) => setFormData({ ...formData, area: val })}
-        min={0.1}
+        placeholder="مثال: 10 أو 10.5"
         required
       />
       <Field
