@@ -43,6 +43,32 @@ const HelpSection = () => {
         </div>
       </div>
 
+      <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', marginBottom: '16px' }}>
+        <h3 style={{ color: colors.sky, marginBottom: '16px' }}>📐 وحدات القياس المستخدمة</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
+          <div style={{ backgroundColor: colors.wheat + '25', padding: '14px', borderRadius: '10px', textAlign: 'center' }}>
+            <div style={{ fontSize: '22px', marginBottom: '4px' }}>🟫</div>
+            <div style={{ fontWeight: 'bold', color: colors.dark, fontSize: '16px' }}>الدونم</div>
+            <div style={{ fontSize: '13px', color: colors.soil, marginTop: '4px' }}>= <strong style={{ color: colors.green }}>2500 م²</strong></div>
+            <div style={{ fontSize: '11px', color: colors.soil, marginTop: '2px' }}>= 50 × 50 متر</div>
+          </div>
+          <div style={{ backgroundColor: colors.green + '20', padding: '14px', borderRadius: '10px', textAlign: 'center' }}>
+            <div style={{ fontSize: '22px', marginBottom: '4px' }}>🟩</div>
+            <div style={{ fontWeight: 'bold', color: colors.dark, fontSize: '16px' }}>الهكتار</div>
+            <div style={{ fontSize: '13px', color: colors.soil, marginTop: '4px' }}>= <strong style={{ color: colors.green }}>10,000 م²</strong></div>
+            <div style={{ fontSize: '11px', color: colors.soil, marginTop: '2px' }}>= 100 × 100 متر</div>
+          </div>
+        </div>
+        <div style={{ backgroundColor: colors.cream, borderRadius: '8px', padding: '12px', fontSize: '13px', color: colors.soil, lineHeight: '2' }}>
+          <div>🔁 <strong style={{ color: colors.dark }}>1 هكتار</strong> = <strong style={{ color: colors.green }}>4 دونمات</strong></div>
+          <div>🔁 <strong style={{ color: colors.dark }}>1 دونم</strong> = <strong style={{ color: colors.green }}>0.25 هكتار</strong></div>
+          <div>📌 <strong style={{ color: colors.dark }}>10 دونمات</strong> = <strong style={{ color: colors.green }}>25,000 م²</strong> = 2.5 هكتار</div>
+          <div style={{ marginTop: '6px', padding: '8px', backgroundColor: colors.sky + '15', borderRadius: '6px', fontSize: '12px' }}>
+            💡 التطبيق يستخدم <strong>الدونم</strong> كوحدة قياس رئيسية لأنها الأشيع في الأنبار والعراق
+          </div>
+        </div>
+      </div>
+
       <div style={{ backgroundColor: colors.green + '15', borderRadius: '12px', padding: '20px', marginBottom: '16px', borderRight: `4px solid ${colors.green}` }}>
         <h3 style={{ color: colors.green, marginBottom: '12px' }}>💡 نصائح مهمة</h3>
         <ul style={{ paddingRight: '20px', lineHeight: '2', color: colors.soil, fontSize: '14px' }}>
