@@ -10,6 +10,7 @@ const DailyLogForm = ({ onSuccess }) => {
     minTemp: '',
     weather: '',
     milkProduction: '',
+    eggsCollected: '',
     mortality: '',
     treatments: '',
     feedConsumed: '',
@@ -32,6 +33,7 @@ const DailyLogForm = ({ onSuccess }) => {
       minTemp: Number(formData.minTemp),
       weather: formData.weather,
       milkProduction: Number(formData.milkProduction) || 0,
+      eggsCollected: Number(formData.eggsCollected) || 0,
       mortality: Number(formData.mortality) || 0,
       treatments: formData.treatments,
       feedConsumed: Number(formData.feedConsumed) || 0,
@@ -106,6 +108,16 @@ const DailyLogForm = ({ onSuccess }) => {
         value={formData.milkProduction}
         onChange={(val) => setFormData({ ...formData, milkProduction: val })}
         hint="إجمالي إنتاج اليوم"
+      />
+
+      <Field
+        label="البيض المجموع"
+        type="text"
+        inputMode="numeric"
+        unit="بيضة"
+        value={formData.eggsCollected}
+        onChange={(val) => setFormData({ ...formData, eggsCollected: val })}
+        hint="للدواجن البياضة"
       />
 
       <Field
