@@ -7,7 +7,7 @@ const AIChatbot = ({ onOpenSettings }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'السلام عليكم! أنا فلوكي، مستشارك الزراعي. كيف يمكنني مساعدتك اليوم؟ ⚔️' }
+    { role: 'assistant', text: 'السلام عليكم! أنا فلوكي، مستشارك الزراعي. كيف يمكنني مساعدتك اليوم؟' }
   ]);
   const [conversationHistory, setConversationHistory] = useState([]);
   const [input, setInput] = useState('');
@@ -139,7 +139,7 @@ const AIChatbot = ({ onOpenSettings }) => {
   };
 
   const handleNewConversation = () => {
-    setMessages([{ role: 'assistant', text: 'محادثة جديدة. أنا فلوكي، كيف يمكنني مساعدتك؟ ⚔️' }]);
+    setMessages([{ role: 'assistant', text: 'محادثة جديدة. أنا فلوكي، كيف يمكنني مساعدتك؟' }]);
     setConversationHistory([]);
   };
 
