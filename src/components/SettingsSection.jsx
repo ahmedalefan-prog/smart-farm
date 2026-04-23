@@ -116,7 +116,7 @@ const SettingsSection = ({ onClose }) => {
       </div>
 
       <div style={cardStyle}>
-        <h3 style={{ color: colors.dark, marginBottom: '8px' }}>🤖 المستشار الذكي</h3>
+        <h3 style={{ color: colors.dark, marginBottom: '8px' }}>🪖 فلوكي</h3>
         <p style={{ color: colors.soil, fontSize: '13px', marginBottom: '14px', lineHeight: '1.6' }}>
           أدخل مفتاح Anthropic API لتفعيل المستشار الزراعي الذكي. المفتاح محفوظ على جهازك فقط ولا يُرسل لأي خادم آخر.
         </p>

@@ -13,7 +13,7 @@ const HelpSection = () => {
           <li>املأ بيانات مزرعتك الفعلية (مساحات، أعداد الحيوانات)</li>
           <li>سجل <strong>سجل يومي</strong> لمتابعة الإنتاج والطقس</li>
           <li>راقب <strong>التنبيهات</strong> 🔔 للبقاء على اطلاع</li>
-          <li>استخدم <strong>المستشار الذكي</strong> للحصول على نصائح مخصصة</li>
+          <li>استخدم <strong>فلوكي</strong> للحصول على نصائح مخصصة</li>
         </ol>
       </div>
 
@@ -27,7 +27,7 @@ const HelpSection = () => {
           <div style={{ padding: '6px 0', borderBottom: `1px solid ${colors.cream}` }}>🌿 <strong>الأعلاف:</strong> مخزون ووصفات وحاسبة تجميعية</div>
           <div style={{ padding: '6px 0', borderBottom: `1px solid ${colors.cream}` }}>♻️ <strong>الدورة:</strong> تحليل تدفق الموارد ومؤشرات الاكتفاء الذاتي</div>
           <div style={{ padding: '6px 0', borderBottom: `1px solid ${colors.cream}` }}>📚 <strong>الموسوعة:</strong> 19 سلالة حيوانية مع أمراض ولقاحات ومنشآت</div>
-          <div style={{ padding: '6px 0' }}>🤖 <strong>المستشار:</strong> مساعد ذكي يجيب على استفساراتك بناءً على بياناتك</div>
+          <div style={{ padding: '6px 0' }}>🪖 <strong>فلوكي:</strong> مستشار ذكي يجيب على استفساراتك بناءً على بيانات مزرعتك</div>
         </div>
       </div>
 

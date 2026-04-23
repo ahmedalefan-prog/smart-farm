@@ -7,7 +7,7 @@ const AIChatbot = ({ onOpenSettings }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'السلام عليكم. أنا مستشارك الزراعي الذكي. كيف يمكنني مساعدتك اليوم؟' }
+    { role: 'assistant', text: 'السلام عليكم! أنا فلوكي، مستشارك الزراعي. كيف يمكنني مساعدتك اليوم؟ ⚔️' }
   ]);
   const [conversationHistory, setConversationHistory] = useState([]);
   const [input, setInput] = useState('');
@@ -39,7 +39,7 @@ const AIChatbot = ({ onOpenSettings }) => {
       ? farmData.lands.map(l => `${l.name} (${l.area} دونم${l.currentCrop ? ' - ' + l.currentCrop : ' - بور'})`).join('، ')
       : 'لا توجد أراضٍ مسجلة';
 
-    return `أنت مستشار زراعي متخصص لمزرعة "${farmData.farm.name}" في جزيرة الخالدية، محافظة الأنبار، العراق (على نهر الفرات).
+    return `أنت فلوكي — مستشار زراعي متخصص لمزرعة "${farmData.farm.name}" في جزيرة الخالدية، محافظة الأنبار، العراق (على نهر الفرات).
 
 بيانات المزرعة الحالية:
 - المساحة الكلية: ${farmData.farm.totalArea} دونم، المزروع: ${plantedArea} دونم من ${totalArea} دونم
@@ -70,7 +70,7 @@ const AIChatbot = ({ onOpenSettings }) => {
     if (!apiKey) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        text: '⚠️ لم يتم إضافة مفتاح API بعد.\n\nافتح الإعدادات ← قسم "المستشار الذكي" وأدخل مفتاح Anthropic API للبدء.'
+        text: '⚠️ لم يتم إضافة مفتاح API بعد.\n\nافتح الإعدادات ← قسم "فلوكي" وأدخل مفتاح Anthropic API للبدء.'
       }]);
       setLoading(false);
       return;
@@ -139,7 +139,7 @@ const AIChatbot = ({ onOpenSettings }) => {
   };
 
   const handleNewConversation = () => {
-    setMessages([{ role: 'assistant', text: 'محادثة جديدة. كيف يمكنني مساعدتك؟' }]);
+    setMessages([{ role: 'assistant', text: 'محادثة جديدة. أنا فلوكي، كيف يمكنني مساعدتك؟ ⚔️' }]);
     setConversationHistory([]);
   };
 
@@ -189,7 +189,7 @@ const AIChatbot = ({ onOpenSettings }) => {
             justifyContent: 'center'
           }}
         >
-          🤖
+          🪖
         </button>
       )}
 
@@ -221,8 +221,8 @@ const AIChatbot = ({ onOpenSettings }) => {
             justifyContent: 'space-between'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '18px' }}>🤖</span>
-              <span style={{ fontWeight: 'bold', fontSize: '14px' }}>المستشار الذكي</span>
+              <span style={{ fontSize: '18px' }}>🪖</span>
+              <span style={{ fontWeight: 'bold', fontSize: '14px' }}>فلوكي</span>
               {!hasApiKey && <span style={{ fontSize: '11px', opacity: 0.85 }}>— يحتاج API</span>}
             </div>
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -314,7 +314,7 @@ const AIChatbot = ({ onOpenSettings }) => {
                       padding: '9px 12px', borderRadius: '4px 12px 12px 12px',
                       backgroundColor: colors.sand, color: colors.soil, fontSize: '13px'
                     }}>
-                      🤖 جاري التفكير...
+                      🪖 جاري التفكير...
                     </div>
                   </div>
                 )}

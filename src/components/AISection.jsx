@@ -104,7 +104,7 @@ const AISection = () => {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '24px' }}>🤖</span>
-          <h3 style={{ color: colors.dark, margin: 0 }}>المستشار الذكي</h3>
+          <h3 style={{ color: colors.dark, margin: 0 }}>فلوكي</h3>
         </div>
         <button
           onClick={() => setShowContext(!showContext)}

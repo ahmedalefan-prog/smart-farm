@@ -127,7 +127,7 @@ const AppContent = () => {
         {renderContent()}
       </main>
 
-      {/* المستشار الذكي العائم */}
+      {/* فلوكي العائم */}
       <AIChatbot onOpenSettings={() => setShowSettings(true)} />
 
       {/* زر الإضافة العائم */}
