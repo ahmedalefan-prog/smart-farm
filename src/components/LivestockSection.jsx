@@ -3,6 +3,7 @@ import { useFarm } from '../context/FarmContext';
 import { colors } from '../theme/theme';
 import Modal from './shared/Modal';
 import Field from './shared/Field';
+import BreedingPlanModal from './BreedingPlanModal';
 
 const LivestockSection = () => {
   const {
@@ -15,6 +16,7 @@ const LivestockSection = () => {
 
   const [activeTab, setActiveTab] = useState('cattle');
   const [editItem, setEditItem] = useState(null); // { type, data }
+  const [planItem, setPlanItem] = useState(null); // { type, data }
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   const totalCattle  = farmData.livestock.cattle.herds.reduce((s, h) => s + (h.count || 0), 0);
@@ -31,7 +33,7 @@ const LivestockSection = () => {
 
   const icons = { cattle: '🐄', sheep: '🐑', poultry: '🐔', fish: '🐟' };
 
-  const ActionBtns = ({ id, label, onEdit, onDelete }) => {
+  const ActionBtns = ({ id, label, onEdit, onDelete, onPlan, hasPlan }) => {
     if (pendingDeleteId === id) {
       return (
         <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
@@ -52,14 +54,19 @@ const LivestockSection = () => {
     }
     return (
       <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+        <button onClick={onPlan} style={{
+          flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${hasPlan ? colors.green : colors.sand}`,
+          backgroundColor: hasPlan ? colors.green + '15' : 'white', cursor: 'pointer', fontSize: '13px',
+          fontFamily: 'inherit', color: hasPlan ? colors.green : colors.dark, fontWeight: hasPlan ? 'bold' : 'normal'
+        }}>📋 {hasPlan ? 'خطة التربية' : 'إنشاء خطة'}</button>
         <button onClick={onEdit} style={{
-          flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${colors.sand}`,
+          padding: '8px 14px', borderRadius: '8px', border: `1px solid ${colors.sand}`,
           backgroundColor: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: colors.dark
-        }}>✏️ تعديل</button>
+        }}>✏️</button>
         <button onClick={() => setPendingDeleteId(id)} style={{
-          flex: 1, padding: '8px', borderRadius: '8px', border: 'none',
+          padding: '8px 14px', borderRadius: '8px', border: 'none',
           backgroundColor: '#fee2e2', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: '#dc2626'
-        }}>🗑️ حذف</button>
+        }}>🗑️</button>
       </div>
     );
   };
@@ -203,7 +210,10 @@ const LivestockSection = () => {
               {h.avgWeight && <div><span style={{ color: colors.soil }}>الوزن:</span> <strong>{h.avgWeight} كغ</strong></div>}
               {h.housing   && <div><span style={{ color: colors.soil }}>الحظيرة:</span> <strong>{h.housing}</strong></div>}
             </div>
-            <ActionBtns id={h.id} label={h.name} onEdit={() => setEditItem({ type: 'cattle', data: h })} onDelete={() => deleteCattleHerd(h.id)} />
+            <ActionBtns id={h.id} label={h.name} hasPlan={!!h.plan}
+              onEdit={() => setEditItem({ type: 'cattle', data: h })}
+              onDelete={() => deleteCattleHerd(h.id)}
+              onPlan={() => setPlanItem({ type: 'cattle', data: h })} />
           </div>
         ))
       )}
@@ -220,7 +230,10 @@ const LivestockSection = () => {
               {h.avgWeight && <div><span style={{ color: colors.soil }}>الوزن:</span> <strong>{h.avgWeight} كغ</strong></div>}
               {h.housing   && <div><span style={{ color: colors.soil }}>الحظيرة:</span> <strong>{h.housing}</strong></div>}
             </div>
-            <ActionBtns id={h.id} label={h.name} onEdit={() => setEditItem({ type: 'sheep', data: h })} onDelete={() => deleteSheepHerd(h.id)} />
+            <ActionBtns id={h.id} label={h.name} hasPlan={!!h.plan}
+              onEdit={() => setEditItem({ type: 'sheep', data: h })}
+              onDelete={() => deleteSheepHerd(h.id)}
+              onPlan={() => setPlanItem({ type: 'sheep', data: h })} />
           </div>
         ))
       )}
@@ -245,7 +258,10 @@ const LivestockSection = () => {
                   <small style={{ color: colors.soil }}>{Math.min(100, Math.round((f.ageDays / 42) * 100))}% من التسويق</small>
                 </div>
               </div>
-              <ActionBtns id={f.id} label={f.name} onEdit={() => setEditItem({ type: 'poultry', data: f })} onDelete={() => deletePoultryFlock(f.id)} />
+              <ActionBtns id={f.id} label={f.name} hasPlan={!!f.plan}
+                onEdit={() => setEditItem({ type: 'poultry', data: f })}
+                onDelete={() => deletePoultryFlock(f.id)}
+                onPlan={() => setPlanItem({ type: 'poultry', data: f })} />
             </div>
           );
         })
@@ -270,7 +286,10 @@ const LivestockSection = () => {
               {volume > 0 && <div style={{ height: '6px', backgroundColor: colors.sand, borderRadius: '3px', marginBottom: '12px' }}>
                 <div style={{ width: `${Math.min(100, density)}%`, height: '100%', backgroundColor: density > 90 ? colors.orange : colors.sky, borderRadius: '3px' }} />
               </div>}
-              <ActionBtns id={p.id} label={p.name} onEdit={() => setEditItem({ type: 'fish', data: p })} onDelete={() => deleteFishPond(p.id)} />
+              <ActionBtns id={p.id} label={p.name} hasPlan={!!p.plan}
+                onEdit={() => setEditItem({ type: 'fish', data: p })}
+                onDelete={() => deleteFishPond(p.id)}
+                onPlan={() => setPlanItem({ type: 'fish', data: p })} />
             </div>
           );
         })
@@ -280,6 +299,23 @@ const LivestockSection = () => {
       {editItem && (
         <Modal title={`تعديل: ${editItem.data.name}`} onClose={() => setEditItem(null)}>
           <EditForm />
+        </Modal>
+      )}
+
+      {/* نافذة خطة التربية */}
+      {planItem && (
+        <Modal title={`📋 خطة التربية — ${planItem.data.name}`} onClose={() => setPlanItem(null)}>
+          <BreedingPlanModal
+            animalType={planItem.type}
+            item={planItem.data}
+            onUpdate={(updates) => {
+              if (planItem.type === 'cattle')  updateCattleHerd(planItem.data.id, updates);
+              if (planItem.type === 'sheep')   updateSheepHerd(planItem.data.id, updates);
+              if (planItem.type === 'poultry') updatePoultryFlock(planItem.data.id, updates);
+              if (planItem.type === 'fish')    updateFishPond(planItem.data.id, updates);
+            }}
+            onClose={() => setPlanItem(null)}
+          />
         </Modal>
       )}
     </div>
