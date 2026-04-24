@@ -93,8 +93,8 @@ const AppContent = () => {
       <main className="app-main" style={{
         backgroundColor: colors.cream,
         minHeight: '100vh',
-        paddingTop: 'calc(56px + env(safe-area-inset-top, 0px))',
-        paddingBottom: activeSubSection ? '20px' : '80px'
+        paddingTop: 'calc(104px + env(safe-area-inset-top, 0px))',
+        paddingBottom: '80px'
       }}>
         {!hasTodayLog && (
           <div style={{
@@ -131,7 +131,7 @@ const AppContent = () => {
       <AIChatbot onOpenSettings={() => setShowSettings(true)} />
 
       {/* زر الإضافة العائم */}
-      <div style={{ position: 'fixed', bottom: activeSubSection ? '20px' : '80px', left: '16px', zIndex: 999 }}>
+      <div style={{ position: 'fixed', bottom: '80px', left: '16px', zIndex: 999 }}>
         {showAddMenu && (
           <div style={{
             position: 'absolute',

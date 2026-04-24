@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { colors } from '../theme/theme';
 
 export const MAIN_SECTIONS = [
@@ -9,7 +9,7 @@ export const MAIN_SECTIONS = [
     color: colors.wheat,
     subSections: [
       { id: 'field-crops', name: 'المحاصيل الحقلية' },
-      { id: 'vegetables', name: 'الخضروات' }
+      { id: 'vegetables',  name: 'الخضروات' }
     ]
   },
   {
@@ -28,9 +28,9 @@ export const MAIN_SECTIONS = [
     icon: '💧',
     color: colors.teal,
     subSections: [
-      { id: 'feed', name: 'الأعلاف' },
+      { id: 'feed',       name: 'الأعلاف' },
       { id: 'irrigation', name: 'الري والهندسة' },
-      { id: 'soil', name: 'تأهيل التربة' }
+      { id: 'soil',       name: 'تأهيل التربة' }
     ]
   },
   {
@@ -40,7 +40,7 @@ export const MAIN_SECTIONS = [
     color: colors.purple,
     subSections: [
       { id: 'circular', name: 'الدورة المغلقة' },
-      { id: 'reports', name: 'التقارير' }
+      { id: 'reports',  name: 'التقارير' }
     ]
   },
   {
@@ -62,8 +62,6 @@ const MainNavigation = ({
   onSettingsClick,
   onAlertClick
 }) => {
-  const [showSubMenu, setShowSubMenu] = useState(false);
-
   const currentSection = MAIN_SECTIONS.find(s => s.id === activeSection);
   const currentSubName = activeSubSection
     ? currentSection?.subSections.find(s => s.id === activeSubSection)?.name
@@ -71,7 +69,7 @@ const MainNavigation = ({
 
   return (
     <>
-      {/* شريط علوي */}
+      {/* ── الهيدر ── */}
       <header style={{
         backgroundColor: colors.dark,
         color: 'white',
@@ -83,38 +81,13 @@ const MainNavigation = ({
         alignItems: 'center',
         justifyContent: 'space-between',
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
+        top: 0, left: 0, right: 0,
         zIndex: 100,
         minHeight: '56px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {activeSubSection ? (
-            <button
-              onClick={() => { onSubSectionChange(null); setShowSubMenu(false); }}
-              style={{
-                background: 'none', border: 'none', color: 'white',
-                fontSize: '22px', cursor: 'pointer', padding: '0 4px'
-              }}
-            >
-              ←
-            </button>
-          ) : (
-            <button
-              onClick={() => setShowSubMenu(!showSubMenu)}
-              style={{
-                background: 'none', border: 'none', color: 'white',
-                fontSize: '22px', cursor: 'pointer', padding: '0 4px'
-              }}
-            >
-              {showSubMenu ? '✕' : '☰'}
-            </button>
-          )}
-          <h1 style={{ fontSize: '17px', margin: 0 }}>
-            {currentSubName || currentSection?.name || 'المزرعة الذكية'}
-          </h1>
-        </div>
+        <h1 style={{ fontSize: '17px', margin: 0, fontWeight: 'bold' }}>
+          {currentSubName || currentSection?.name || 'المزرعة الذكية'}
+        </h1>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           {onAlertClick && (
@@ -134,36 +107,60 @@ const MainNavigation = ({
         </div>
       </header>
 
-      {/* قائمة منسدلة للأقسام الفرعية */}
-      {showSubMenu && !activeSubSection && currentSection && (
+      {/* ── شريط الأقسام الفرعية الأفقي ── */}
+      {currentSection && (
         <div style={{
           position: 'fixed',
           top: 'calc(56px + env(safe-area-inset-top, 0px))',
-          left: 0,
-          right: 0,
+          left: 0, right: 0,
           backgroundColor: 'white',
-          boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
-          zIndex: 99
+          borderBottom: `1px solid ${colors.sand}`,
+          zIndex: 99,
+          display: 'flex',
+          overflowX: 'auto',
+          gap: '8px',
+          padding: '8px 14px',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
         }}>
+          {/* تبويب "نظرة عامة" لكل قسم */}
+          <button
+            onClick={() => onSubSectionChange(null)}
+            style={{
+              padding: '7px 16px',
+              borderRadius: '20px',
+              border: 'none',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: '13px',
+              backgroundColor: !activeSubSection ? currentSection.color : colors.cream,
+              color:           !activeSubSection ? 'white'                : colors.soil,
+              fontWeight:      !activeSubSection ? 'bold'                 : 'normal'
+            }}
+          >
+            {currentSection.icon} {currentSection.name}
+          </button>
+
+          {/* تبويبات الأقسام الفرعية */}
           {currentSection.subSections.map(sub => (
             <button
               key={sub.id}
-              onClick={() => {
-                onSubSectionChange(sub.id);
-                setShowSubMenu(false);
-              }}
+              onClick={() => onSubSectionChange(sub.id)}
               style={{
-                display: 'block',
-                width: '100%',
-                padding: '14px 20px',
-                textAlign: 'right',
+                padding: '7px 16px',
+                borderRadius: '20px',
                 border: 'none',
-                backgroundColor: 'transparent',
-                fontSize: '15px',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
                 cursor: 'pointer',
-                borderBottom: `1px solid ${colors.sand}`,
                 fontFamily: 'inherit',
-                color: colors.dark
+                fontSize: '13px',
+                backgroundColor: activeSubSection === sub.id ? currentSection.color : colors.cream,
+                color:           activeSubSection === sub.id ? 'white'               : colors.soil,
+                fontWeight:      activeSubSection === sub.id ? 'bold'                : 'normal'
               }}
             >
               {sub.name}
@@ -172,61 +169,47 @@ const MainNavigation = ({
         </div>
       )}
 
-      {/* الشريط السفلي */}
-      {!activeSubSection && (
-        <nav style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: colors.dark,
-          display: 'flex',
-          justifyContent: 'space-around',
-          paddingTop: '6px',
-          paddingLeft: '4px',
-          paddingRight: '4px',
-          paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
-          zIndex: 100,
-          boxShadow: '0 -2px 8px rgba(0,0,0,0.15)'
-        }}>
-          {MAIN_SECTIONS.map(section => (
-            <button
-              key={section.id}
-              onClick={() => { onSectionChange(section.id); setShowSubMenu(false); }}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '3px',
-                background: 'none',
-                border: 'none',
-                color: activeSection === section.id ? section.color : '#888',
-                cursor: 'pointer',
-                padding: '6px 8px',
-                borderRadius: '8px',
-                minWidth: '56px',
-                backgroundColor: activeSection === section.id ? section.color + '22' : 'transparent',
-                fontFamily: 'inherit'
-              }}
-            >
-              <span style={{ fontSize: '22px' }}>{section.icon}</span>
-              <span style={{ fontSize: '10px', fontWeight: activeSection === section.id ? 'bold' : 'normal' }}>
-                {section.name}
-              </span>
-            </button>
-          ))}
-        </nav>
-      )}
-
-      {/* طبقة خلفية لإغلاق القائمة */}
-      {showSubMenu && (
-        <div
-          onClick={() => setShowSubMenu(false)}
-          style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 98
-          }}
-        />
-      )}
+      {/* ── الشريط السفلي — دائماً مرئي ── */}
+      <nav style={{
+        position: 'fixed',
+        bottom: 0, left: 0, right: 0,
+        backgroundColor: colors.dark,
+        display: 'flex',
+        justifyContent: 'space-around',
+        paddingTop: '6px',
+        paddingLeft: '4px',
+        paddingRight: '4px',
+        paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
+        zIndex: 100,
+        boxShadow: '0 -2px 8px rgba(0,0,0,0.15)'
+      }}>
+        {MAIN_SECTIONS.map(section => (
+          <button
+            key={section.id}
+            onClick={() => onSectionChange(section.id)}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '3px',
+              background: 'none',
+              border: 'none',
+              color:           activeSection === section.id ? section.color : '#888',
+              cursor: 'pointer',
+              padding: '6px 8px',
+              borderRadius: '8px',
+              minWidth: '56px',
+              backgroundColor: activeSection === section.id ? section.color + '22' : 'transparent',
+              fontFamily: 'inherit'
+            }}
+          >
+            <span style={{ fontSize: '22px' }}>{section.icon}</span>
+            <span style={{ fontSize: '10px', fontWeight: activeSection === section.id ? 'bold' : 'normal' }}>
+              {section.name}
+            </span>
+          </button>
+        ))}
+      </nav>
     </>
   );
 };
