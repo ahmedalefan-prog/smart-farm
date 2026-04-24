@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { colors } from '../theme/theme';
-import { getTemplatesForType, getGeneralRecs, BREEDING_TEMPLATES } from '../data/breedingTemplates';
+import { getTemplatesForType, getGeneralRecs, getPurposesForType, PURPOSE_LABELS, PURPOSE_COLORS, BREEDING_TEMPLATES } from '../data/breedingTemplates';
 
 /* ── helpers ── */
 const addDays = (dateStr, days) => {
@@ -38,11 +38,16 @@ const C = {
 ══════════════════════════════════════════════ */
 const BreedingPlanModal = ({ animalType, item, onUpdate, onClose }) => {
   const existing = item.plan || null;
-  const [screen, setScreen]   = useState(existing ? 'editor' : 'template');
-  const [plan,   setPlan]     = useState(existing);
-  const [tab,    setTab]      = useState('phases');
+  const [screen,        setScreen]        = useState(existing ? 'editor' : 'template');
+  const [plan,          setPlan]          = useState(existing);
+  const [tab,           setTab]           = useState('phases');
+  const [purposeFilter, setPurposeFilter] = useState('all');
 
-  const templates = getTemplatesForType(animalType);
+  const allTemplates     = getTemplatesForType(animalType);
+  const availablePurposes = getPurposesForType(animalType);
+  const templates = purposeFilter === 'all'
+    ? allTemplates
+    : allTemplates.filter(([, t]) => t.purpose === purposeFilter);
 
   /* apply template */
   const applyTemplate = (key, tmpl) => {
@@ -70,56 +75,92 @@ const BreedingPlanModal = ({ animalType, item, onUpdate, onClose }) => {
   if (screen === 'template') {
     return (
       <div>
-        <p style={{ color: C.soil, fontSize: '14px', marginBottom: '16px' }}>
-          اختر قالباً جاهزاً أو ابدأ بإدخال يدوي
-        </p>
+        {/* Purpose filter tabs */}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+          <button
+            onClick={() => setPurposeFilter('all')}
+            style={{
+              padding: '7px 14px', borderRadius: '20px', border: 'none', whiteSpace: 'nowrap',
+              flexShrink: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: '12px',
+              backgroundColor: purposeFilter === 'all' ? C.dark : C.cream,
+              color: purposeFilter === 'all' ? 'white' : C.soil,
+              fontWeight: purposeFilter === 'all' ? 'bold' : 'normal'
+            }}
+          >الكل ({allTemplates.length})</button>
+          {availablePurposes.map(p => (
+            <button key={p} onClick={() => setPurposeFilter(p)} style={{
+              padding: '7px 14px', borderRadius: '20px', border: 'none', whiteSpace: 'nowrap',
+              flexShrink: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: '12px',
+              backgroundColor: purposeFilter === p ? PURPOSE_COLORS[p] : C.cream,
+              color: purposeFilter === p ? 'white' : C.soil,
+              fontWeight: purposeFilter === p ? 'bold' : 'normal'
+            }}>{PURPOSE_LABELS[p]}</button>
+          ))}
+        </div>
 
-        {templates.map(([key, tmpl]) => (
-          <button key={key} onClick={() => applyTemplate(key, tmpl)} style={{
-            display: 'flex', alignItems: 'center', gap: '14px', width: '100%',
-            padding: '14px 16px', marginBottom: '10px', borderRadius: '12px',
-            border: `1px solid ${C.sand}`, backgroundColor: 'white', cursor: 'pointer',
-            textAlign: 'right', fontFamily: 'inherit'
-          }}>
-            <span style={{ fontSize: '32px' }}>{tmpl.icon}</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 'bold', color: C.dark, fontSize: '15px' }}>{tmpl.label}</div>
-              <div style={{ fontSize: '12px', color: C.soil, marginTop: '3px' }}>
-                {tmpl.totalDays} يوم · {tmpl.phases.length} مراحل · {tmpl.vaccines.length} لقاحات
+        {/* Template cards */}
+        {templates.map(([key, tmpl]) => {
+          const purposeColor = PURPOSE_COLORS[tmpl.purpose] || C.sky;
+          return (
+            <button key={key} onClick={() => applyTemplate(key, tmpl)} style={{
+              display: 'flex', alignItems: 'flex-start', gap: '12px', width: '100%',
+              padding: '14px', marginBottom: '10px', borderRadius: '14px',
+              border: `1px solid ${C.sand}`, backgroundColor: 'white', cursor: 'pointer',
+              textAlign: 'right', fontFamily: 'inherit'
+            }}>
+              <span style={{ fontSize: '34px', flexShrink: 0 }}>{tmpl.icon}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: 'bold', color: C.dark, fontSize: '14px' }}>{tmpl.label}</span>
+                  <span style={{
+                    fontSize: '10px', padding: '2px 8px', borderRadius: '10px', flexShrink: 0,
+                    backgroundColor: purposeColor + '20', color: purposeColor, fontWeight: 'bold'
+                  }}>{PURPOSE_LABELS[tmpl.purpose]}</span>
+                </div>
+                {/* Targets */}
+                {tmpl.targets && (
+                  <div style={{ fontSize: '12px', color: C.soil, marginBottom: '6px', lineHeight: 1.5 }}>
+                    <span style={{ color: purposeColor, fontWeight: 'bold' }}>🎯 {tmpl.targets.main}</span>
+                    {tmpl.targets.secondary && <span style={{ marginRight: '8px' }}> · {tmpl.targets.secondary}</span>}
+                  </div>
+                )}
+                <div style={{ fontSize: '11px', color: C.soil }}>
+                  {tmpl.totalDays} يوم · {tmpl.phases.length} مراحل · {tmpl.vaccines.length} لقاحات
+                </div>
               </div>
-            </div>
-            <span style={{ color: C.sky, fontSize: '18px' }}>›</span>
-          </button>
-        ))}
+              <span style={{ color: C.sky, fontSize: '20px', flexShrink: 0 }}>›</span>
+            </button>
+          );
+        })}
 
+        {/* Manual entry */}
         <button onClick={startManual} style={{
-          display: 'flex', alignItems: 'center', gap: '14px', width: '100%',
-          padding: '14px 16px', marginBottom: '10px', borderRadius: '12px',
+          display: 'flex', alignItems: 'center', gap: '12px', width: '100%',
+          padding: '14px', marginBottom: '10px', borderRadius: '14px',
           border: `2px dashed ${C.sand}`, backgroundColor: C.cream, cursor: 'pointer',
           textAlign: 'right', fontFamily: 'inherit'
         }}>
-          <span style={{ fontSize: '32px' }}>✏️</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 'bold', color: C.dark, fontSize: '15px' }}>إدخال يدوي</div>
+          <span style={{ fontSize: '34px' }}>✏️</span>
+          <div>
+            <div style={{ fontWeight: 'bold', color: C.dark, fontSize: '14px' }}>إدخال يدوي</div>
             <div style={{ fontSize: '12px', color: C.soil, marginTop: '3px' }}>أضف المراحل واللقاحات بنفسك</div>
           </div>
         </button>
 
         {existing && (
           <button onClick={() => setScreen('editor')} style={{
-            width: '100%', padding: '12px', marginTop: '8px', border: `1px solid ${C.sky}`,
+            width: '100%', padding: '12px', marginTop: '4px', border: `1px solid ${C.sky}`,
             borderRadius: '10px', backgroundColor: 'white', color: C.sky, cursor: 'pointer',
             fontFamily: 'inherit', fontSize: '14px'
-          }}>
-            ← العودة للخطة الحالية
-          </button>
+          }}>← العودة للخطة الحالية</button>
         )}
       </div>
     );
   }
 
   /* ── EDITOR SCREEN ── */
-  const today     = new Date().toISOString().split('T')[0];
+  const today      = new Date().toISOString().split('T')[0];
+  const tmplMeta   = plan.templateKey ? BREEDING_TEMPLATES[plan.templateKey] : null;
   const currentDay = plan.startDate ? daysDiff(plan.startDate, today) : 0;
   const endDate    = plan.startDate ? addDays(plan.startDate, plan.totalDays) : null;
   const daysLeft   = endDate ? daysDiff(today, endDate) : 0;
@@ -143,6 +184,21 @@ const BreedingPlanModal = ({ animalType, item, onUpdate, onClose }) => {
     <div>
       {/* ── Summary Bar ── */}
       <div style={{ backgroundColor: C.dark, borderRadius: '12px', padding: '14px', marginBottom: '16px', color: 'white' }}>
+        {/* breed + purpose header */}
+        {tmplMeta && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '20px' }}>{tmplMeta.icon}</span>
+            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{tmplMeta.label}</span>
+            <span style={{
+              fontSize: '11px', padding: '2px 8px', borderRadius: '10px',
+              backgroundColor: (PURPOSE_COLORS[tmplMeta.purpose] || C.sky) + '40',
+              color: PURPOSE_COLORS[tmplMeta.purpose] || C.sky, fontWeight: 'bold'
+            }}>{PURPOSE_LABELS[tmplMeta.purpose]}</span>
+            {tmplMeta.targets?.main && (
+              <span style={{ fontSize: '11px', opacity: 0.8 }}>· {tmplMeta.targets.main}</span>
+            )}
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13px' }}>
           <span>يوم <strong>{Math.max(0, currentDay)}</strong> من {plan.totalDays}</span>
           <span>{daysLeft > 0 ? `متبقي ${daysLeft} يوم` : currentDay > plan.totalDays ? 'انتهت الفترة' : 'اليوم الأول'}</span>
@@ -602,7 +658,8 @@ const TreatmentsTab = ({ plan, setPlan }) => {
    TAB: RECOMMENDATIONS
 ══════════════════════════════════════════════ */
 const RecsTab = ({ plan, currentDay, animalType, currentPhase, nextVaccine, nextVaccineDays }) => {
-  const tmpl = plan.templateKey ? BREEDING_TEMPLATES[plan.templateKey] : null;
+  const tmpl    = plan.templateKey ? BREEDING_TEMPLATES[plan.templateKey] : null;
+  const pColor  = tmpl ? (PURPOSE_COLORS[tmpl.purpose] || C.sky) : C.sky;
 
   const currentRec = tmpl?.recommendations?.find(r => currentDay >= r.fromDay && currentDay <= r.toDay);
   const generalRecs = getGeneralRecs(animalType);
@@ -673,6 +730,32 @@ const RecsTab = ({ plan, currentDay, animalType, currentPhase, nextVaccine, next
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Common diseases */}
+      {tmpl?.commonDiseases?.length > 0 && (
+        <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '14px', marginBottom: '14px' }}>
+          <div style={{ fontWeight: 'bold', color: C.red, fontSize: '13px', marginBottom: '8px' }}>⚠️ أمراض شائعة لهذه السلالة — كن يقظاً</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {tmpl.commonDiseases.map((d, i) => (
+              <span key={i} style={{ backgroundColor: '#fee2e2', color: '#b91c1c', fontSize: '12px', padding: '4px 10px', borderRadius: '20px' }}>
+                {d}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Performance targets */}
+      {tmpl?.targets && (
+        <div style={{ backgroundColor: pColor + '12', border: `1px solid ${pColor}30`, borderRadius: '12px', padding: '14px', marginBottom: '14px' }}>
+          <div style={{ fontWeight: 'bold', color: pColor, fontSize: '13px', marginBottom: '8px' }}>🎯 الأهداف الإنتاجية</div>
+          <div style={{ fontSize: '13px', color: C.dark, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div>• <strong>الرئيسي:</strong> {tmpl.targets.main}</div>
+            {tmpl.targets.secondary && <div>• <strong>إجمالي:</strong> {tmpl.targets.secondary}</div>}
+            {tmpl.targets.fcr && <div>• <strong>معدل التحويل:</strong> {tmpl.targets.fcr}</div>}
+          </div>
         </div>
       )}
 
