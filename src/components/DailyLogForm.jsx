@@ -3,8 +3,20 @@ import { useFarm } from '../context/FarmContext';
 import Field from './shared/Field';
 import { colors } from '../theme/theme';
 
+const WMO_TO_ARABIC = (code) => {
+  if (code === 0) return 'مشمس';
+  if (code <= 2)  return 'غائم جزئي';
+  if (code === 3) return 'غائم';
+  if (code <= 48) return 'غائم';
+  if (code <= 67 || (code >= 80 && code <= 82)) return 'ممطر';
+  if (code >= 95) return 'عاصف';
+  return 'غائم جزئي';
+};
+
 const DailyLogForm = ({ onSuccess }) => {
   const { addDailyLog, farmData } = useFarm();
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherFetched, setWeatherFetched] = useState(false);
   const [formData, setFormData] = useState({
     maxTemp: '',
     minTemp: '',
@@ -20,6 +32,26 @@ const DailyLogForm = ({ onSuccess }) => {
   const [error, setError] = useState('');
 
   const weatherOptions = ['مشمس', 'غائم جزئي', 'غائم', 'ممطر', 'عاصف'];
+
+  const fetchWeather = async () => {
+    setWeatherLoading(true);
+    try {
+      const lat = farmData.farm.lat ?? 33.35;
+      const lon = farmData.farm.lon ?? 43.78;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia%2FBaghdad&forecast_days=1`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      const maxT = Math.round(data.daily.temperature_2m_max[0]);
+      const minT = Math.round(data.daily.temperature_2m_min[0]);
+      const code = data.daily.weather_code[0];
+      setFormData(f => ({ ...f, maxTemp: String(maxT), minTemp: String(minT), weather: WMO_TO_ARABIC(code) }));
+      setWeatherFetched(true);
+    } catch {
+      setError('تعذّر جلب الطقس — تأكد من الاتصال بالإنترنت');
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -66,7 +98,20 @@ const DailyLogForm = ({ onSuccess }) => {
         </div>
       )}
 
-      <h3 style={{ color: colors.dark, marginBottom: '16px' }}>☀️ الطقس</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+        <h3 style={{ color: colors.dark, margin: 0 }}>☀️ الطقس</h3>
+        <button type="button" onClick={fetchWeather} disabled={weatherLoading}
+          style={{
+            padding: '7px 14px', borderRadius: '8px',
+            backgroundColor: weatherFetched ? colors.green + '20' : colors.sky + '20',
+            color: weatherFetched ? colors.green : colors.sky,
+            border: `1px solid ${weatherFetched ? colors.green : colors.sky}50`,
+            cursor: weatherLoading ? 'default' : 'pointer',
+            fontFamily: 'inherit', fontSize: '12px', fontWeight: 'bold'
+          }}>
+          {weatherLoading ? '⏳ جاري الجلب...' : weatherFetched ? '✅ تم الجلب' : '🌐 جلب تلقائي'}
+        </button>
+      </div>
 
       <div style={{ display: 'flex', gap: '10px' }}>
         <Field

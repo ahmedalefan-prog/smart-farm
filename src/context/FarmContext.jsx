@@ -18,7 +18,9 @@ const initialFarmData = {
     name: 'مزرعة الجزيرة الخضراء',
     totalArea: 500,
     unit: 'دونم',
-    established: '2024-01-01'
+    established: '2024-01-01',
+    lat: 33.35,
+    lon: 43.78
   },
   lands: [],
   livestock: {

@@ -7,6 +7,8 @@ const SettingsSection = ({ onClose }) => {
   const { farmData, setFarmData, importFullData } = useFarm();
   const [farmName, setFarmName] = useState(farmData.farm.name);
   const [totalArea, setTotalArea] = useState(farmData.farm.totalArea);
+  const [lat, setLat] = useState(String(farmData.farm.lat ?? 33.35));
+  const [lon, setLon] = useState(String(farmData.farm.lon ?? 43.78));
   const [confirmReset, setConfirmReset] = useState(false);
   const [importError, setImportError] = useState('');
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('smartFarmApiKey') || '');
@@ -27,7 +29,7 @@ const SettingsSection = ({ onClose }) => {
   const handleSave = () => {
     setFarmData(prev => ({
       ...prev,
-      farm: { ...prev.farm, name: farmName, totalArea: Number(totalArea) }
+      farm: { ...prev.farm, name: farmName, totalArea: Number(totalArea), lat: parseFloat(lat) || 33.35, lon: parseFloat(lon) || 43.78 }
     }));
     if (onClose) onClose();
   };
@@ -94,6 +96,10 @@ const SettingsSection = ({ onClose }) => {
         <h3 style={{ color: colors.dark, marginBottom: '16px' }}>معلومات المزرعة</h3>
         <Field label="اسم المزرعة" value={farmName} onChange={setFarmName} />
         <Field label="المساحة الكلية" type="text" inputMode="decimal" unit="دونم" value={String(totalArea)} onChange={setTotalArea} placeholder="مثال: 200" />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <Field label="خط العرض (Lat)" type="text" inputMode="decimal" value={lat} onChange={setLat} placeholder="33.35" hint="لجلب الطقس تلقائياً" />
+          <Field label="خط الطول (Lon)" type="text" inputMode="decimal" value={lon} onChange={setLon} placeholder="43.78" />
+        </div>
         <button onClick={handleSave} style={{ ...btnStyle(colors.green), marginTop: '8px' }}>
           💾 حفظ الإعدادات
         </button>
