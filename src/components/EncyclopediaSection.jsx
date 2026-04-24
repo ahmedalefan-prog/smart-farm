@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { colors } from '../theme/theme';
+import { diseases, DISEASE_CATEGORIES, SEVERITY } from '../data/diseasesData';
 
 const breeds = [
   // أبقار - 6 سلالات
@@ -1184,6 +1185,9 @@ const EncyclopediaSection = () => {
   const [expandedFarmTool, setExpandedFarmTool] = useState(null);
   const [expandedFeedTool, setExpandedFeedTool] = useState(null);
   const [expandedManureTool, setExpandedManureTool] = useState(null);
+  const [selectedDiseaseAnimal, setSelectedDiseaseAnimal] = useState('all');
+  const [expandedDisease, setExpandedDisease]   = useState(null);
+  const [diseaseTab, setDiseaseTab]             = useState('symptoms'); // symptoms | treatment | prevention
 
   const filteredBreeds = useMemo(() => {
     return breeds.filter(b => {
@@ -1210,6 +1214,7 @@ const EncyclopediaSection = () => {
       <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', marginBottom: '16px', paddingBottom: '4px' }}>
         {[
           { id: 'breeds',    label: `🧬 السلالات`,        count: breeds.length,      color: colors.purple },
+          { id: 'diseases',  label: `🦠 الأمراض`,         count: diseases.length,    color: '#dc2626'    },
           { id: 'facilities',label: `🏗️ المنشآت`,         count: facilities.length,  color: colors.sky },
           { id: 'farmtools', label: `🚜 آلات الزراعة`,    count: farmTools.length,   color: colors.wheat },
           { id: 'feedtools', label: `🌿 آلات العلف`,      count: feedTools.length,   color: colors.green },
@@ -1618,6 +1623,194 @@ const EncyclopediaSection = () => {
                 )}
               </div>
             ))}
+          </div>
+        );
+      })()}
+
+      {/* ══════════════════ الأمراض ══════════════════ */}
+      {activeTab === 'diseases' && (() => {
+        const q = searchTerm.trim().toLowerCase();
+        const filteredD = diseases.filter(d => {
+          const matchAnimal = selectedDiseaseAnimal === 'all' || d.animal === selectedDiseaseAnimal;
+          const matchSearch = !q || d.name.includes(q) || d.nameEn?.toLowerCase().includes(q) || d.type?.includes(q) || d.summary?.includes(q);
+          return matchAnimal && matchSearch;
+        });
+        return (
+          <div>
+            {/* فلتر الحيوانات */}
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', marginBottom: '14px', paddingBottom: '4px' }}>
+              <button onClick={() => setSelectedDiseaseAnimal('all')}
+                style={{ padding: '7px 14px', borderRadius: '16px', border: 'none', whiteSpace: 'nowrap', flexShrink: 0,
+                  cursor: 'pointer', fontFamily: 'inherit', fontSize: '12px',
+                  backgroundColor: selectedDiseaseAnimal === 'all' ? '#dc2626' : colors.cream,
+                  color: selectedDiseaseAnimal === 'all' ? 'white' : colors.dark,
+                  fontWeight: selectedDiseaseAnimal === 'all' ? 'bold' : 'normal'
+                }}>الكل ({diseases.length})</button>
+              {DISEASE_CATEGORIES.map(cat => (
+                <button key={cat.id} onClick={() => setSelectedDiseaseAnimal(cat.id)}
+                  style={{ padding: '7px 14px', borderRadius: '16px', border: 'none', whiteSpace: 'nowrap', flexShrink: 0,
+                    cursor: 'pointer', fontFamily: 'inherit', fontSize: '12px',
+                    backgroundColor: selectedDiseaseAnimal === cat.id ? cat.color : colors.cream,
+                    color: selectedDiseaseAnimal === cat.id ? 'white' : colors.dark,
+                    fontWeight: selectedDiseaseAnimal === cat.id ? 'bold' : 'normal'
+                  }}>{cat.icon} {cat.label} ({diseases.filter(d => d.animal === cat.id).length})</button>
+              ))}
+            </div>
+
+            {/* قائمة الأمراض */}
+            {filteredD.length === 0 && <p style={{ textAlign: 'center', color: colors.soil, padding: '30px' }}>لا توجد نتائج مطابقة</p>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {filteredD.map(disease => {
+                const sev     = SEVERITY[disease.severity] || SEVERITY.medium;
+                const catInfo = DISEASE_CATEGORIES.find(c => c.id === disease.animal) || {};
+                const isOpen  = expandedDisease === disease.id;
+
+                return (
+                  <div key={disease.id} style={{ backgroundColor: 'white', borderRadius: '14px', border: `1px solid ${colors.sand}`, overflow: 'hidden' }}>
+                    {/* رأس البطاقة */}
+                    <div onClick={() => { setExpandedDisease(isOpen ? null : disease.id); setDiseaseTab('symptoms'); }}
+                      style={{ padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                      <div style={{
+                        width: '44px', height: '44px', borderRadius: '10px', flexShrink: 0,
+                        backgroundColor: sev.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px'
+                      }}>{disease.icon}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '15px', color: colors.dark, marginBottom: '4px' }}>{disease.name}</div>
+                        <div style={{ fontSize: '11px', color: colors.soil, marginBottom: '6px' }}>{disease.nameEn}</div>
+                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '8px', backgroundColor: sev.bg, color: sev.color, fontWeight: 'bold' }}>
+                            ⚠️ {sev.label}
+                          </span>
+                          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '8px', backgroundColor: catInfo.color + '20', color: catInfo.color, fontWeight: 'bold' }}>
+                            {catInfo.icon} {catInfo.label}
+                          </span>
+                          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '8px', backgroundColor: colors.cream, color: colors.soil }}>
+                            {disease.type}
+                          </span>
+                          {disease.contagious && (
+                            <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '8px', backgroundColor: '#fef9c3', color: '#854d0e', fontWeight: 'bold' }}>
+                              📢 معدٍ
+                            </span>
+                          )}
+                          {disease.zoonotic && (
+                            <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '8px', backgroundColor: '#fee2e2', color: '#dc2626', fontWeight: 'bold' }}>
+                              👤 ينتقل للإنسان
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span style={{ color: colors.soil, fontSize: '18px', flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</span>
+                    </div>
+
+                    {/* الملخص */}
+                    {isOpen && (
+                      <div style={{ borderTop: `1px solid ${colors.cream}` }}>
+                        <div style={{ padding: '10px 16px', backgroundColor: sev.bg + '80', fontSize: '13px', color: colors.dark, lineHeight: '1.7' }}>
+                          {disease.summary}
+                        </div>
+
+                        {/* تبويبات الأقسام */}
+                        <div style={{ display: 'flex', borderBottom: `1px solid ${colors.sand}` }}>
+                          {[
+                            { id: 'symptoms',   label: '🤒 الأعراض'   },
+                            { id: 'treatment',  label: '💊 العلاج'    },
+                            { id: 'prevention', label: '🛡️ الوقاية'   }
+                          ].map(t => (
+                            <button key={t.id} onClick={() => setDiseaseTab(t.id)}
+                              style={{
+                                flex: 1, padding: '10px 6px', border: 'none', cursor: 'pointer',
+                                fontFamily: 'inherit', fontSize: '12px', fontWeight: 'bold',
+                                backgroundColor: diseaseTab === t.id ? sev.color : 'white',
+                                color: diseaseTab === t.id ? 'white' : colors.soil,
+                                borderBottom: diseaseTab === t.id ? `2px solid ${sev.color}` : '2px solid transparent'
+                              }}>{t.label}</button>
+                          ))}
+                        </div>
+
+                        {/* محتوى الأعراض */}
+                        {diseaseTab === 'symptoms' && (
+                          <div style={{ padding: '14px 16px' }}>
+                            {(disease.symptoms || []).map((group, gi) => (
+                              <div key={gi} style={{ marginBottom: '14px' }}>
+                                <div style={{ fontWeight: 'bold', fontSize: '13px', color: sev.color, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: sev.color, display: 'inline-block' }}/>
+                                  {group.title}
+                                </div>
+                                {(group.points || []).map((point, pi) => (
+                                  <div key={pi} style={{
+                                    display: 'flex', gap: '8px', alignItems: 'flex-start',
+                                    padding: '7px 10px', marginBottom: '4px',
+                                    backgroundColor: sev.bg, borderRadius: '8px',
+                                    borderRight: `3px solid ${sev.color}`
+                                  }}>
+                                    <span style={{ color: sev.color, flexShrink: 0, marginTop: '1px' }}>◆</span>
+                                    <span style={{ fontSize: '13px', color: colors.dark, lineHeight: '1.6' }}>{point}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* محتوى العلاج */}
+                        {diseaseTab === 'treatment' && (
+                          <div style={{ padding: '14px 16px' }}>
+                            {(disease.treatment || []).map((group, gi) => (
+                              <div key={gi} style={{ marginBottom: '16px' }}>
+                                <div style={{ fontWeight: 'bold', fontSize: '13px', color: colors.green, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: colors.green, display: 'inline-block' }}/>
+                                  {group.title}
+                                </div>
+                                {(group.steps || []).map((step, si) => (
+                                  <div key={si} style={{
+                                    display: 'flex', gap: '8px', alignItems: 'flex-start',
+                                    padding: '8px 10px', marginBottom: '5px',
+                                    backgroundColor: colors.green + '10', borderRadius: '8px',
+                                    borderRight: `3px solid ${colors.green}`
+                                  }}>
+                                    <span style={{ color: colors.green, fontWeight: 'bold', flexShrink: 0, fontSize: '13px' }}>{si + 1}.</span>
+                                    <span style={{ fontSize: '13px', color: colors.dark, lineHeight: '1.6' }}>{step}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                            {disease.notes && (
+                              <div style={{ padding: '10px 12px', backgroundColor: '#fef9c3', borderRadius: '8px', border: '1px solid #fde047', fontSize: '12px', color: '#854d0e', marginTop: '8px' }}>
+                                ⚠️ <strong>ملاحظة مهمة:</strong> {disease.notes}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* محتوى الوقاية */}
+                        {diseaseTab === 'prevention' && (
+                          <div style={{ padding: '14px 16px' }}>
+                            <div style={{ marginBottom: '12px' }}>
+                              {(disease.prevention || []).map((step, si) => (
+                                <div key={si} style={{
+                                  display: 'flex', gap: '8px', alignItems: 'flex-start',
+                                  padding: '8px 10px', marginBottom: '5px',
+                                  backgroundColor: '#eff6ff', borderRadius: '8px',
+                                  borderRight: '3px solid #3b82f6'
+                                }}>
+                                  <span style={{ color: '#3b82f6', flexShrink: 0, fontSize: '16px' }}>🛡️</span>
+                                  <span style={{ fontSize: '13px', color: colors.dark, lineHeight: '1.6' }}>{step}</span>
+                                </div>
+                              ))}
+                            </div>
+                            {disease.zoonotic && (
+                              <div style={{ padding: '10px 12px', backgroundColor: '#fee2e2', borderRadius: '8px', border: '1px solid #fca5a5', fontSize: '12px', color: '#dc2626' }}>
+                                🚨 <strong>تحذير:</strong> هذا المرض ينتقل إلى الإنسان — استخدم معدات الحماية الشخصية دائماً.
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         );
       })()}
