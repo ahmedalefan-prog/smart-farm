@@ -275,6 +275,83 @@ export const FarmProvider = ({ children }) => {
     }));
   };
 
+  // دوال تتبع الحيوانات الفردية (أبقار وأغنام)
+  const _herdKey = (type) => type === 'cattle' ? ['cattle', 'herds'] : ['sheep', 'herds'];
+
+  const addAnimalToHerd = (type, herdId, animal) => {
+    const [ak, lk] = _herdKey(type);
+    setFarmData(prev => ({
+      ...prev,
+      livestock: {
+        ...prev.livestock,
+        [ak]: {
+          [lk]: prev.livestock[ak][lk].map(h =>
+            h.id === herdId
+              ? { ...h, animals: [...(h.animals || []), { ...animal, id: Date.now().toString(), addedAt: new Date().toISOString(), medicalHistory: [] }] }
+              : h
+          )
+        }
+      }
+    }));
+  };
+
+  const updateAnimalInHerd = (type, herdId, animalId, updates) => {
+    const [ak, lk] = _herdKey(type);
+    setFarmData(prev => ({
+      ...prev,
+      livestock: {
+        ...prev.livestock,
+        [ak]: {
+          [lk]: prev.livestock[ak][lk].map(h =>
+            h.id === herdId
+              ? { ...h, animals: (h.animals || []).map(a => a.id === animalId ? { ...a, ...updates } : a) }
+              : h
+          )
+        }
+      }
+    }));
+  };
+
+  const deleteAnimalFromHerd = (type, herdId, animalId) => {
+    const [ak, lk] = _herdKey(type);
+    setFarmData(prev => ({
+      ...prev,
+      livestock: {
+        ...prev.livestock,
+        [ak]: {
+          [lk]: prev.livestock[ak][lk].map(h =>
+            h.id === herdId
+              ? { ...h, animals: (h.animals || []).filter(a => a.id !== animalId) }
+              : h
+          )
+        }
+      }
+    }));
+  };
+
+  const addMedicalEvent = (type, herdId, animalId, event) => {
+    const [ak, lk] = _herdKey(type);
+    setFarmData(prev => ({
+      ...prev,
+      livestock: {
+        ...prev.livestock,
+        [ak]: {
+          [lk]: prev.livestock[ak][lk].map(h =>
+            h.id === herdId
+              ? {
+                  ...h, animals: (h.animals || []).map(a =>
+                    a.id === animalId
+                      ? { ...a, medicalHistory: [...(a.medicalHistory || []), { ...event, id: Date.now().toString(), date: event.date || new Date().toISOString().split('T')[0] }] }
+                      : a
+                  )
+                }
+              : h
+          )
+        }
+      }
+    }));
+  };
+
   // دوال مخزون الأدوية
   const addMedicine = (item) => {
     setFarmData(prev => ({
@@ -359,6 +436,10 @@ export const FarmProvider = ({ children }) => {
     addDailyLog,
     addTransaction,
     deleteTransaction,
+    addAnimalToHerd,
+    updateAnimalInHerd,
+    deleteAnimalFromHerd,
+    addMedicalEvent,
     addMedicine,
     updateMedicine,
     deleteMedicine,

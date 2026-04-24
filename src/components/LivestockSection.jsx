@@ -4,6 +4,7 @@ import { colors } from '../theme/theme';
 import Modal from './shared/Modal';
 import Field from './shared/Field';
 import BreedingPlanModal from './BreedingPlanModal';
+import AnimalRecordsModal from './AnimalRecordsModal';
 
 const LivestockSection = () => {
   const {
@@ -15,8 +16,9 @@ const LivestockSection = () => {
   } = useFarm();
 
   const [activeTab, setActiveTab] = useState('cattle');
-  const [editItem, setEditItem] = useState(null); // { type, data }
-  const [planItem, setPlanItem] = useState(null); // { type, data }
+  const [editItem, setEditItem]       = useState(null); // { type, data }
+  const [planItem, setPlanItem]       = useState(null); // { type, data }
+  const [recordsItem, setRecordsItem] = useState(null); // { type, data }
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   const totalCattle  = farmData.livestock.cattle.herds.reduce((s, h) => s + (h.count || 0), 0);
@@ -33,7 +35,7 @@ const LivestockSection = () => {
 
   const icons = { cattle: '🐄', sheep: '🐑', poultry: '🐔', fish: '🐟' };
 
-  const ActionBtns = ({ id, label, onEdit, onDelete, onPlan, hasPlan }) => {
+  const ActionBtns = ({ id, label, onEdit, onDelete, onPlan, hasPlan, onRecords, recordsCount }) => {
     if (pendingDeleteId === id) {
       return (
         <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
@@ -53,20 +55,34 @@ const LivestockSection = () => {
       );
     }
     return (
-      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-        <button onClick={onPlan} style={{
-          flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${hasPlan ? colors.green : colors.sand}`,
-          backgroundColor: hasPlan ? colors.green + '15' : 'white', cursor: 'pointer', fontSize: '13px',
-          fontFamily: 'inherit', color: hasPlan ? colors.green : colors.dark, fontWeight: hasPlan ? 'bold' : 'normal'
-        }}>📋 {hasPlan ? 'خطة التربية' : 'إنشاء خطة'}</button>
-        <button onClick={onEdit} style={{
-          padding: '8px 14px', borderRadius: '8px', border: `1px solid ${colors.sand}`,
-          backgroundColor: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: colors.dark
-        }}>✏️</button>
-        <button onClick={() => setPendingDeleteId(id)} style={{
-          padding: '8px 14px', borderRadius: '8px', border: 'none',
-          backgroundColor: '#fee2e2', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: '#dc2626'
-        }}>🗑️</button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+        {onRecords && (
+          <button onClick={onRecords} style={{
+            width: '100%', padding: '8px', borderRadius: '8px',
+            border: `1px solid ${recordsCount > 0 ? colors.sky : colors.sand}`,
+            backgroundColor: recordsCount > 0 ? colors.sky + '12' : 'white',
+            cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit',
+            color: recordsCount > 0 ? colors.sky : colors.dark,
+            fontWeight: recordsCount > 0 ? 'bold' : 'normal'
+          }}>
+            👤 السجلات الفردية{recordsCount > 0 ? ` (${recordsCount})` : ''}
+          </button>
+        )}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={onPlan} style={{
+            flex: 1, padding: '8px', borderRadius: '8px', border: `1px solid ${hasPlan ? colors.green : colors.sand}`,
+            backgroundColor: hasPlan ? colors.green + '15' : 'white', cursor: 'pointer', fontSize: '13px',
+            fontFamily: 'inherit', color: hasPlan ? colors.green : colors.dark, fontWeight: hasPlan ? 'bold' : 'normal'
+          }}>📋 {hasPlan ? 'خطة التربية' : 'إنشاء خطة'}</button>
+          <button onClick={onEdit} style={{
+            padding: '8px 14px', borderRadius: '8px', border: `1px solid ${colors.sand}`,
+            backgroundColor: 'white', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: colors.dark
+          }}>✏️</button>
+          <button onClick={() => setPendingDeleteId(id)} style={{
+            padding: '8px 14px', borderRadius: '8px', border: 'none',
+            backgroundColor: '#fee2e2', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', color: '#dc2626'
+          }}>🗑️</button>
+        </div>
       </div>
     );
   };
@@ -213,7 +229,9 @@ const LivestockSection = () => {
             <ActionBtns id={h.id} label={h.name} hasPlan={!!h.plan}
               onEdit={() => setEditItem({ type: 'cattle', data: h })}
               onDelete={() => deleteCattleHerd(h.id)}
-              onPlan={() => setPlanItem({ type: 'cattle', data: h })} />
+              onPlan={() => setPlanItem({ type: 'cattle', data: h })}
+              onRecords={() => setRecordsItem({ type: 'cattle', data: h })}
+              recordsCount={(h.animals || []).length} />
           </div>
         ))
       )}
@@ -233,7 +251,9 @@ const LivestockSection = () => {
             <ActionBtns id={h.id} label={h.name} hasPlan={!!h.plan}
               onEdit={() => setEditItem({ type: 'sheep', data: h })}
               onDelete={() => deleteSheepHerd(h.id)}
-              onPlan={() => setPlanItem({ type: 'sheep', data: h })} />
+              onPlan={() => setPlanItem({ type: 'sheep', data: h })}
+              onRecords={() => setRecordsItem({ type: 'sheep', data: h })}
+              recordsCount={(h.animals || []).length} />
           </div>
         ))
       )}
@@ -299,6 +319,17 @@ const LivestockSection = () => {
       {editItem && (
         <Modal title={`تعديل: ${editItem.data.name}`} onClose={() => setEditItem(null)}>
           <EditForm />
+        </Modal>
+      )}
+
+      {/* نافذة السجلات الفردية */}
+      {recordsItem && (
+        <Modal title={`👤 السجلات الفردية — ${recordsItem.data.name}`} onClose={() => setRecordsItem(null)}>
+          <AnimalRecordsModal
+            herd={recordsItem.data}
+            herdType={recordsItem.type}
+            onClose={() => setRecordsItem(null)}
+          />
         </Modal>
       )}
 
