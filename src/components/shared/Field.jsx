@@ -31,7 +31,8 @@ const Field = ({
             border: `1px solid ${colors.sand}`,
             fontSize: '16px',
             fontFamily: 'inherit',
-            backgroundColor: 'white'
+            backgroundColor: 'white',
+            color: colors.dark
           }}
           required={required}
         >
@@ -64,7 +65,8 @@ const Field = ({
             border: `1px solid ${colors.sand}`,
             fontSize: '16px',
             fontFamily: 'inherit',
-            backgroundColor: 'white'
+            backgroundColor: 'white',
+            color: colors.dark
           }}
         />
         {unit && (
