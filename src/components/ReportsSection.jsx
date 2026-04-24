@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useFarm } from '../context/FarmContext';
+import PrintReport from './PrintReport';
 import { colors } from '../theme/theme';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -19,7 +20,8 @@ const trendBadge = (current, prev) => {
 
 const ReportsSection = () => {
   const { farmData } = useFarm();
-  const [reportType, setReportType] = useState('alerts');
+  const [reportType, setReportType]         = useState('alerts');
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
@@ -319,10 +321,10 @@ const ReportsSection = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2 style={{ color: colors.dark }}>📊 التقارير والتحليلات</h2>
         <button
-          onClick={() => window.print()}
-          style={{ padding: '10px 16px', backgroundColor: colors.purple, color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit' }}
+          onClick={() => setShowPrintPreview(true)}
+          style={{ padding: '10px 16px', backgroundColor: colors.purple, color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 'bold' }}
         >
-          🖨️ طباعة
+          📄 تصدير PDF
         </button>
       </div>
 
@@ -819,6 +821,39 @@ const ReportsSection = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* مودال معاينة الطباعة */}
+      {showPrintPreview && (
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)',
+          zIndex: 9999, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', overflowY: 'auto', padding: '20px'
+        }}>
+          {/* شريط الأزرار */}
+          <div style={{
+            position: 'sticky', top: 0, zIndex: 1, width: '100%', maxWidth: '820px',
+            display: 'flex', gap: '10px', marginBottom: '12px'
+          }}>
+            <button onClick={() => window.print()} style={{
+              flex: 1, padding: '12px', backgroundColor: colors.green, color: 'white',
+              border: 'none', borderRadius: '10px', cursor: 'pointer',
+              fontFamily: 'inherit', fontSize: '15px', fontWeight: 'bold'
+            }}>🖨️ طباعة / حفظ PDF</button>
+            <button onClick={() => setShowPrintPreview(false)} style={{
+              padding: '12px 18px', backgroundColor: 'white', color: colors.dark,
+              border: 'none', borderRadius: '10px', cursor: 'pointer',
+              fontFamily: 'inherit', fontSize: '15px', fontWeight: 'bold'
+            }}>✕ إغلاق</button>
+          </div>
+          {/* المحتوى القابل للطباعة */}
+          <div id="print-content" style={{
+            backgroundColor: 'white', borderRadius: '12px', width: '100%', maxWidth: '820px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+          }}>
+            <PrintReport />
+          </div>
         </div>
       )}
 

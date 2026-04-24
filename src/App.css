@@ -151,16 +151,30 @@ button:active {
 
 /* للطباعة */
 @media print {
-  .app-header, .bottom-nav, .no-print {
+  body > * { display: none !important; }
+  body > #root > * > *:not(:last-child) { display: none !important; }
+
+  header, nav, .app-main, .bottom-nav, .app-header, .no-print {
     display: none !important;
   }
 
-  .print-only {
+  /* إظهار محتوى الطباعة فقط */
+  #print-content, #print-content * {
     display: block !important;
+    visibility: visible !important;
   }
 
-  .app-main {
-    background-color: white !important;
+  #print-content {
+    position: fixed !important;
+    inset: 0 !important;
+    background: white !important;
+    overflow: auto !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    z-index: 99999 !important;
     padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
   }
 }

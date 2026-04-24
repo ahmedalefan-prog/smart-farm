@@ -25,7 +25,8 @@
       "Bash(curl *)",
       "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{const r=JSON.parse\\(d\\).workflow_runs[0];console.log\\('status:',r.status,'conclusion:',r.conclusion,'created:',r.created_at\\)}\\)\")",
       "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>{JSON.parse\\(d\\).workflow_runs.forEach\\(r=>console.log\\(r.status, r.conclusion, r.created_at, r.head_commit?.message?.split\\('\\\\n'\\)[0]\\)\\)}\\)\")",
-      "Bash(gh run *)"
+      "Bash(gh run *)",
+      "Bash(npm uninstall *)"
     ]
   }
 }
