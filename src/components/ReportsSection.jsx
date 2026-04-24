@@ -113,6 +113,52 @@ const ReportsSection = () => {
     };
   }, [farmData, dailyLogsData, livestockStats, cropsStats]);
 
+  // ─── بيانات أداء الدورات ─────────────────────────────────────────────────
+  const cyclesData = useMemo(() => {
+    const today = new Date();
+    const allHerds = [
+      ...farmData.livestock.cattle.herds.map(h  => ({ ...h, kind: 'cattle',  icon: '🐄', label: 'أبقار',  color: colors.soil   })),
+      ...farmData.livestock.sheep.herds.map(h   => ({ ...h, kind: 'sheep',   icon: '🐑', label: 'أغنام',  color: colors.green  })),
+      ...farmData.livestock.poultry.flocks.map(f => ({ ...f, kind: 'poultry', icon: '🐔', label: 'دواجن', color: colors.orange })),
+      ...farmData.livestock.fish.ponds.map(p    => ({ ...p, kind: 'fish',    icon: '🐟', label: 'أسماك', color: colors.sky    }))
+    ].filter(h => h.plan?.startDate && h.plan?.totalDays);
+
+    return allHerds.map(h => {
+      const start = new Date(h.plan.startDate);
+      const elapsed = Math.max(0, Math.floor((today - start) / (1000 * 60 * 60 * 24)));
+      const progress = Math.min(100, Math.round((elapsed / h.plan.totalDays) * 100));
+      const remaining = Math.max(0, h.plan.totalDays - elapsed);
+      const endDate = new Date(start);
+      endDate.setDate(endDate.getDate() + h.plan.totalDays);
+
+      // سجلات في فترة الدورة
+      const cycleLogs = dailyLogsData.filter(l => {
+        const d = new Date(l.date);
+        return d >= start && d <= today;
+      });
+      const totalFeed     = cycleLogs.reduce((s, l) => s + (l.feedConsumed    || 0), 0);
+      const totalMilk     = cycleLogs.reduce((s, l) => s + (l.milkProduction  || 0), 0);
+      const totalEggs     = cycleLogs.reduce((s, l) => s + (l.eggsCollected   || 0), 0);
+      const totalMortality = cycleLogs.reduce((s, l) => s + (l.mortality      || 0), 0);
+      const mortalityRate = h.count > 0 ? ((totalMortality / h.count) * 100).toFixed(1) : 0;
+
+      // FCR تقديري: علف كلي / (عدد × وزن حالي)
+      const currentWeight = parseFloat(h.avgWeight || h.plan?.phases?.[0]?.targetWeight || 0);
+      const totalWeightGained = h.count * currentWeight * (progress / 100);
+      const fcr = totalWeightGained > 0 ? (totalFeed / totalWeightGained).toFixed(2) : null;
+
+      // مقارنة مع الهدف
+      const targetMain = h.plan?.targets?.main || '';
+      const targetFCR  = parseFloat(h.plan?.targets?.fcr) || null;
+
+      return {
+        ...h, elapsed, progress, remaining, endDate,
+        totalFeed, totalMilk, totalEggs, totalMortality, mortalityRate, fcr,
+        targetMain, targetFCR, cycleLogs: cycleLogs.length
+      };
+    });
+  }, [farmData, dailyLogsData]);
+
   // ─── بيانات الرسوم ───────────────────────────────────────────────────────
   const weeklyChartData = useMemo(() =>
     last14.map(log => ({
@@ -286,6 +332,7 @@ const ReportsSection = () => {
           { id: 'alerts',   name: criticalCount ? `⚠️ التنبيهات (${criticalCount})` : '⚠️ التنبيهات' },
           { id: 'weekly',   name: 'أسبوعي' },
           { id: 'monthly',  name: 'شهري' },
+          { id: 'cycles',   name: '🔄 الدورات' },
           { id: 'overview', name: 'نظرة عامة' },
           { id: 'logs',     name: '📋 السجل' }
         ].map(tab => (
@@ -673,6 +720,104 @@ const ReportsSection = () => {
                 </div>
               );
             })
+          )}
+        </div>
+      )}
+
+      {/* ══════════════════════ أداء الدورات ══════════════════════ */}
+      {reportType === 'cycles' && (
+        <div>
+          {cyclesData.length === 0 ? (
+            <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', textAlign: 'center', color: colors.soil }}>
+              <div style={{ fontSize: '40px', marginBottom: '10px' }}>🔄</div>
+              <div style={{ fontWeight: 'bold' }}>لا توجد دورات تربية نشطة</div>
+              <div style={{ fontSize: '13px', marginTop: '6px' }}>أضف خطط التربية للقطعان من قسم الحيوانية</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {cyclesData.map(h => (
+                <div key={h.id} style={{ backgroundColor: 'white', borderRadius: '14px', border: `1px solid ${colors.sand}`, overflow: 'hidden' }}>
+                  {/* رأس */}
+                  <div style={{ padding: '12px 14px', borderBottom: `1px solid ${colors.cream}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '26px' }}>{h.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 'bold', fontSize: '15px', color: colors.dark }}>{h.name}</div>
+                      <div style={{ fontSize: '12px', color: colors.soil }}>
+                        {h.label} · {h.count || h.fishCount} رأس · بدأت {new Date(h.plan.startDate).toLocaleDateString('ar-IQ')}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '22px', fontWeight: 'bold', color: h.color }}>{h.progress}%</div>
+                      <div style={{ fontSize: '11px', color: colors.soil }}>مكتمل</div>
+                    </div>
+                  </div>
+
+                  {/* شريط التقدم */}
+                  <div style={{ padding: '10px 14px 0' }}>
+                    <div style={{ height: '8px', backgroundColor: colors.cream, borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${h.progress}%`, height: '100%', backgroundColor: h.color, borderRadius: '4px', transition: 'width 0.3s' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: colors.soil, marginTop: '4px' }}>
+                      <span>اليوم {h.elapsed} من {h.plan.totalDays}</span>
+                      <span>{h.remaining > 0 ? `${h.remaining} يوم متبقي` : `انتهت ${new Date(h.endDate).toLocaleDateString('ar-IQ')}`}</span>
+                    </div>
+                  </div>
+
+                  {/* KPIs */}
+                  <div style={{ padding: '12px 14px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+                    <div style={{ backgroundColor: colors.cream, borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: colors.dark }}>
+                        {h.totalFeed > 0 ? `${(h.totalFeed / 1000).toFixed(1)} طن` : '—'}
+                      </div>
+                      <div style={{ fontSize: '11px', color: colors.soil, marginTop: '2px' }}>علف مستهلك</div>
+                    </div>
+                    <div style={{ backgroundColor: colors.cream, borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: parseFloat(h.mortalityRate) > 3 ? '#ef4444' : colors.green }}>
+                        {h.mortalityRate}%
+                      </div>
+                      <div style={{ fontSize: '11px', color: colors.soil, marginTop: '2px' }}>معدل النفوق ({h.totalMortality})</div>
+                    </div>
+                    {h.totalMilk > 0 && (
+                      <div style={{ backgroundColor: colors.sky + '15', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: colors.sky }}>{h.totalMilk.toFixed(0)} ل</div>
+                        <div style={{ fontSize: '11px', color: colors.soil, marginTop: '2px' }}>إنتاج الحليب</div>
+                      </div>
+                    )}
+                    {h.totalEggs > 0 && (
+                      <div style={{ backgroundColor: colors.wheat + '15', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '18px', fontWeight: 'bold', color: colors.wheat }}>{h.totalEggs.toLocaleString()}</div>
+                        <div style={{ fontSize: '11px', color: colors.soil, marginTop: '2px' }}>بيض مجموع</div>
+                      </div>
+                    )}
+                    {h.fcr && (
+                      <div style={{ backgroundColor: colors.green + '15', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '18px', fontWeight: 'bold', color: colors.green }}>{h.fcr}</span>
+                          {h.targetFCR && (
+                            <span style={{ fontSize: '11px', color: parseFloat(h.fcr) <= h.targetFCR ? colors.green : '#ef4444' }}>
+                              / هدف {h.targetFCR}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '11px', color: colors.soil, marginTop: '2px' }}>FCR معدل التحويل</div>
+                      </div>
+                    )}
+                    <div style={{ backgroundColor: colors.purple + '15', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: colors.purple }}>{h.cycleLogs}</div>
+                      <div style={{ fontSize: '11px', color: colors.soil, marginTop: '2px' }}>يوم مسجّل</div>
+                    </div>
+                  </div>
+
+                  {/* الهدف من الخطة */}
+                  {h.targetMain && (
+                    <div style={{ margin: '0 14px 14px', padding: '8px 12px', backgroundColor: h.color + '10', borderRadius: '8px', border: `1px solid ${h.color}30` }}>
+                      <span style={{ fontSize: '12px', color: colors.soil }}>🎯 هدف الخطة: </span>
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: h.color }}>{h.targetMain}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}
