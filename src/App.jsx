@@ -15,6 +15,7 @@ import AddFishPondForm from './components/forms/AddFishPondForm';
 import AddFeedIngredientForm from './components/forms/AddFeedIngredientForm';
 
 import Dashboard from './components/Dashboard';
+import TodayTasks from './components/TodayTasks';
 import CropsSection from './components/CropsSection';
 import VegetablesSection from './components/VegetablesSection';
 import LivestockSection from './components/LivestockSection';
@@ -24,6 +25,7 @@ import IrrigationSection from './components/IrrigationSection';
 import SoilReclamation from './components/SoilReclamation';
 import CircularFlow from './components/CircularFlow';
 import ReportsSection from './components/ReportsSection';
+import FinanceSection from './components/FinanceSection';
 import EncyclopediaSection from './components/EncyclopediaSection';
 
 import './App.css';
@@ -59,6 +61,7 @@ const AppContent = () => {
         case 'soil':         return <SoilReclamation />;
         case 'circular':     return <CircularFlow />;
         case 'reports':      return <ReportsSection />;
+        case 'finance':      return <FinanceSection />;
         case 'encyclopedia': return <EncyclopediaSection />;
         default:             return <Dashboard />;
       }
@@ -87,7 +90,7 @@ const AppContent = () => {
         onSectionChange={(id) => { setActiveSection(id); setActiveSubSection(null); setShowAddMenu(false); }}
         onSubSectionChange={(id) => { setActiveSubSection(id); setShowAddMenu(false); }}
         onSettingsClick={() => setShowSettings(true)}
-        onAlertClick={() => setShowHelp(true)}
+        onAlertClick={() => { setActiveSection('analytics'); setActiveSubSection('reports'); }}
       />
 
       <main className="app-main" style={{
@@ -124,6 +127,17 @@ const AppContent = () => {
           </div>
         )}
 
+        {/* مهام اليوم — تظهر فقط على الصفحة الرئيسية */}
+        {!activeSubSection && (
+          <div style={{ padding: '12px 16px 0' }}>
+            <TodayTasks onAction={(action) => {
+              if (action === 'dailyLog')  setActiveForm('dailyLog');
+              if (action === 'livestock') { setActiveSection('livestock'); setActiveSubSection('animals'); }
+              if (action === 'crops')     { setActiveSection('crops');     setActiveSubSection('field-crops'); }
+              if (action === 'feed')      { setActiveSection('resources'); setActiveSubSection('feed'); }
+            }} />
+          </div>
+        )}
         {renderContent()}
       </main>
 

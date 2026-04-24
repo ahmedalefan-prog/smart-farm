@@ -34,6 +34,7 @@ const initialFarmData = {
   },
   soilTests: [],
   dailyLogs: [],
+  finances: { transactions: [] },
   alerts: []
 };
 
@@ -249,9 +250,33 @@ export const FarmProvider = ({ children }) => {
     }));
   };
 
+  // دوال المالية
+  const addTransaction = (tx) => {
+    setFarmData(prev => ({
+      ...prev,
+      finances: {
+        ...prev.finances,
+        transactions: [
+          ...(prev.finances?.transactions || []),
+          { ...tx, id: Date.now().toString(), createdAt: new Date().toISOString() }
+        ]
+      }
+    }));
+  };
+
+  const deleteTransaction = (id) => {
+    setFarmData(prev => ({
+      ...prev,
+      finances: {
+        ...prev.finances,
+        transactions: (prev.finances?.transactions || []).filter(t => t.id !== id)
+      }
+    }));
+  };
+
   // دالة إعادة تعيين كامل (للاستيراد)
   const importFullData = (data) => {
-    setFarmData(data);
+    setFarmData({ ...initialFarmData, ...data, finances: data.finances || { transactions: [] } });
   };
 
   // دوال التنبيهات
@@ -299,6 +324,8 @@ export const FarmProvider = ({ children }) => {
     deleteFeedIngredient,
     addSoilTest,
     addDailyLog,
+    addTransaction,
+    deleteTransaction,
     importFullData,
     markAlertAsRead,
     dismissAlert,

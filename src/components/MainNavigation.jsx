@@ -40,7 +40,8 @@ export const MAIN_SECTIONS = [
     color: colors.purple,
     subSections: [
       { id: 'circular', name: 'الدورة المغلقة' },
-      { id: 'reports',  name: 'التقارير' }
+      { id: 'reports',  name: 'التقارير' },
+      { id: 'finance',  name: '💰 المالية' }
     ]
   },
   {

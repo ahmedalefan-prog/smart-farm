@@ -31,6 +31,13 @@ const AIChatbot = ({ onOpenSettings }) => {
     const feedKg = farmData.feedInventory.ingredients.reduce((s, ing) => {
       return s + (ing.unit === 'طن' ? (ing.quantity || 0) * 1000 : (ing.quantity || 0));
     }, 0);
+    // بيانات مالية
+    const transactions = farmData.finances?.transactions || [];
+    const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+    const monthTx = transactions.filter(t => new Date(t.date) >= monthStart);
+    const monthIncome  = monthTx.filter(t => t.type === 'income').reduce((s, t)  => s + (t.amount || 0), 0);
+    const monthExpense = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + (t.amount || 0), 0);
+
     const lastLog = farmData.dailyLogs[farmData.dailyLogs.length - 1];
     const lastWeather = lastLog
       ? `${lastLog.weather || 'غير محدد'} / ${lastLog.maxTemp || '--'}°C - ${lastLog.minTemp || '--'}°C`
@@ -47,6 +54,7 @@ const AIChatbot = ({ onOpenSettings }) => {
 - الثروة الحيوانية: ${cattle} رأس أبقار | ${sheep} رأس أغنام | ${poultry} طائر دواجن | ${fish} سمكة
 - مخزون الأعلاف: ${feedKg.toFixed(0)} كغ
 - آخر طقس مسجل: ${lastWeather}
+- المالية هذا الشهر: إيرادات ${monthIncome.toLocaleString()} د.ع | مصاريف ${monthExpense.toLocaleString()} د.ع | صافي ${(monthIncome - monthExpense).toLocaleString()} د.ع
 
 قواعد المستشار:
 - أجب بالعربية دائماً
