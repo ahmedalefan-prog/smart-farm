@@ -1180,18 +1180,20 @@ const FeedSection = () => {
 
       {/* السماد */}
       {activeTab === 'manure' && (() => {
-        const cattleCount = farmData.livestock.cattle.herds.reduce((s, h) => s + (h.count || 0), 0);
-        const sheepCount = farmData.livestock.sheep.herds.reduce((s, h) => s + (h.count || 0), 0);
+        const cattleCount  = farmData.livestock.cattle.herds.reduce((s, h) => s + (h.count || 0), 0);
+        const sheepCount   = farmData.livestock.sheep.herds.reduce((s, h) => s + (h.count || 0), 0);
         const poultryCount = farmData.livestock.poultry.flocks.reduce((s, f) => s + (f.count || 0), 0);
+        const fishCount    = farmData.livestock.fish.ponds.reduce((s, p) => s + (p.fishCount || 0), 0);
 
-        const dailyCattleManure = cattleCount * 25;
-        const dailySheepManure = sheepCount * 2.5;
+        const dailyCattleManure  = cattleCount  * 25;
+        const dailySheepManure   = sheepCount   * 2.5;
         const dailyPoultryManure = poultryCount * 0.15;
-        const dailyTotal = dailyCattleManure + dailySheepManure + dailyPoultryManure;
+        const dailyFishSludge    = fishCount    * 0.03;  // حمأة الأحواض: ~30 غرام/سمكة/يوم
+        const dailyTotal = dailyCattleManure + dailySheepManure + dailyPoultryManure + dailyFishSludge;
         const annualManure = dailyTotal * 365;
         const annualCompost = annualManure * 0.4;
 
-        const dailyBiogas = dailyCattleManure * 0.045 + dailySheepManure * 0.035 + dailyPoultryManure * 0.08;
+        const dailyBiogas = dailyCattleManure * 0.045 + dailySheepManure * 0.035 + dailyPoultryManure * 0.08 + dailyFishSludge * 0.025;
 
         const nitrogenKg = annualCompost * 0.02;
         const phosphorusKg = annualCompost * 0.015;
@@ -1206,7 +1208,7 @@ const FeedSection = () => {
               </p>
             </div>
 
-            {(cattleCount + sheepCount + poultryCount) === 0 ? (
+            {(cattleCount + sheepCount + poultryCount + fishCount) === 0 ? (
               <div style={{ textAlign: 'center', padding: '30px', color: colors.soil }}>
                 <p style={{ fontSize: '32px', margin: '0 0 10px' }}>🐄</p>
                 <p style={{ margin: 0 }}>أضف حيواناتك أولاً لحساب إنتاج السماد</p>
@@ -1235,6 +1237,14 @@ const FeedSection = () => {
                         <div style={{ fontSize: '22px' }}>🐔</div>
                         <div style={{ fontWeight: 'bold', color: colors.dark }}>{poultryCount} طائر</div>
                         <div style={{ fontSize: '11px', color: colors.soil }}>دواجن</div>
+                      </div>
+                    )}
+                    {fishCount > 0 && (
+                      <div style={{ textAlign: 'center', backgroundColor: colors.sky + '15', padding: '10px 16px', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '22px' }}>🐟</div>
+                        <div style={{ fontWeight: 'bold', color: colors.dark }}>{fishCount} سمكة</div>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>حمأة أحواض</div>
+                        <div style={{ fontSize: '10px', color: colors.sky }}>30 غ/سمكة/يوم</div>
                       </div>
                     )}
                   </div>
