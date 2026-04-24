@@ -117,7 +117,36 @@ const TodayTasks = ({ onAction }) => {
       }
     });
 
-    /* ── 6. إذا لا مهام ── */
+    /* ── 6. أدوية منتهية الصلاحية أو منخفضة ── */
+    (farmData.medicineInventory?.items || []).forEach(med => {
+      const expDiff = med.expiryDate
+        ? Math.floor((new Date(med.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))
+        : null;
+      if (expDiff !== null && expDiff <= 14) {
+        list.push({
+          id: `med-exp-${med.id}`,
+          priority: expDiff <= 0 ? 'critical' : 'high',
+          icon: '💊',
+          title: expDiff <= 0 ? `انتهت صلاحية: ${med.name}` : `تنتهي صلاحية: ${med.name}`,
+          subtitle: expDiff <= 0 ? `منتهي منذ ${Math.abs(expDiff)} يوم` : `بعد ${expDiff} يوم`,
+          action: 'medicines',
+          color: expDiff <= 0 ? '#ef4444' : colors.orange
+        });
+      }
+      if (med.minQuantity > 0 && med.quantity <= med.minQuantity) {
+        list.push({
+          id: `med-low-${med.id}`,
+          priority: med.quantity === 0 ? 'critical' : 'high',
+          icon: '📦',
+          title: `مخزون حرج: ${med.name}`,
+          subtitle: `متبقي ${med.quantity} ${med.unit} — اطلب توريداً`,
+          action: 'medicines',
+          color: '#ef4444'
+        });
+      }
+    });
+
+    /* ── 7. إذا لا مهام ── */
     if (list.length === 0) {
       list.push({
         id: 'all-good',

@@ -18,8 +18,9 @@ export const MAIN_SECTIONS = [
     icon: '🐄',
     color: colors.soil,
     subSections: [
-      { id: 'animals', name: 'القطعان' },
-      { id: 'housing', name: 'المنشآت والمساكن' }
+      { id: 'animals',   name: 'القطعان' },
+      { id: 'housing',   name: 'المنشآت والمساكن' },
+      { id: 'medicines', name: 'الأدوية واللقاحات' }
     ]
   },
   {

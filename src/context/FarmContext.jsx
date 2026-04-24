@@ -35,6 +35,7 @@ const initialFarmData = {
   soilTests: [],
   dailyLogs: [],
   finances: { transactions: [] },
+  medicineInventory: { items: [] },
   alerts: []
 };
 
@@ -274,9 +275,41 @@ export const FarmProvider = ({ children }) => {
     }));
   };
 
+  // دوال مخزون الأدوية
+  const addMedicine = (item) => {
+    setFarmData(prev => ({
+      ...prev,
+      medicineInventory: {
+        items: [...(prev.medicineInventory?.items || []), { ...item, id: Date.now().toString(), addedDate: new Date().toISOString() }]
+      }
+    }));
+  };
+
+  const updateMedicine = (id, updates) => {
+    setFarmData(prev => ({
+      ...prev,
+      medicineInventory: {
+        items: (prev.medicineInventory?.items || []).map(m => m.id === id ? { ...m, ...updates } : m)
+      }
+    }));
+  };
+
+  const deleteMedicine = (id) => {
+    setFarmData(prev => ({
+      ...prev,
+      medicineInventory: {
+        items: (prev.medicineInventory?.items || []).filter(m => m.id !== id)
+      }
+    }));
+  };
+
   // دالة إعادة تعيين كامل (للاستيراد)
   const importFullData = (data) => {
-    setFarmData({ ...initialFarmData, ...data, finances: data.finances || { transactions: [] } });
+    setFarmData({
+      ...initialFarmData, ...data,
+      finances: data.finances || { transactions: [] },
+      medicineInventory: data.medicineInventory || { items: [] }
+    });
   };
 
   // دوال التنبيهات
@@ -326,6 +359,9 @@ export const FarmProvider = ({ children }) => {
     addDailyLog,
     addTransaction,
     deleteTransaction,
+    addMedicine,
+    updateMedicine,
+    deleteMedicine,
     importFullData,
     markAlertAsRead,
     dismissAlert,

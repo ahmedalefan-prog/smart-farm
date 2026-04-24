@@ -26,6 +26,7 @@ import SoilReclamation from './components/SoilReclamation';
 import CircularFlow from './components/CircularFlow';
 import ReportsSection from './components/ReportsSection';
 import FinanceSection from './components/FinanceSection';
+import MedicineSection from './components/MedicineSection';
 import EncyclopediaSection from './components/EncyclopediaSection';
 
 import './App.css';
@@ -56,6 +57,7 @@ const AppContent = () => {
         case 'vegetables':   return <VegetablesSection />;
         case 'animals':      return <LivestockSection />;
         case 'housing':      return <HousingSection />;
+        case 'medicines':    return <MedicineSection />;
         case 'feed':         return <FeedSection />;
         case 'irrigation':   return <IrrigationSection />;
         case 'soil':         return <SoilReclamation />;
@@ -134,7 +136,8 @@ const AppContent = () => {
               if (action === 'dailyLog')  setActiveForm('dailyLog');
               if (action === 'livestock') { setActiveSection('livestock'); setActiveSubSection('animals'); }
               if (action === 'crops')     { setActiveSection('crops');     setActiveSubSection('field-crops'); }
-              if (action === 'feed')      { setActiveSection('resources'); setActiveSubSection('feed'); }
+              if (action === 'feed')      { setActiveSection('resources');  setActiveSubSection('feed'); }
+              if (action === 'medicines') { setActiveSection('livestock');  setActiveSubSection('medicines'); }
             }} />
           </div>
         )}
