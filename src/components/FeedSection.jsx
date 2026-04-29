@@ -817,18 +817,32 @@ const FeedSection = () => {
                     🎯 {recipe.targetAnimal} · طاقة: {recipe.energy}
                   </div>
 
-                  {/* المكونات */}
-                  <h4 style={{ color: colors.sky, marginBottom: '8px', fontSize: '13px' }}>📊 المكونات (%)</h4>
+                  {/* المكونات مع مؤشر المخزون */}
+                  <h4 style={{ color: colors.sky, marginBottom: '4px', fontSize: '13px' }}>📊 المكونات (%)</h4>
+                  {farmData.feedInventory.ingredients.length > 0 && (
+                    <div style={{ fontSize: '11px', color: colors.soil, marginBottom: '8px' }}>
+                      <span style={{ color: colors.green }}>●</span> موجود في مخزونك &nbsp;
+                      <span style={{ color: colors.orange }}>●</span> غير موجود
+                    </div>
+                  )}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px', marginBottom: '12px' }}>
-                    {Object.entries(recipe.ingredients).map(([name, pct]) => (
-                      <div key={name} style={{
-                        padding: '4px 8px', backgroundColor: colors.cream,
-                        borderRadius: '6px', fontSize: '12px'
-                      }}>
-                        <span style={{ color: colors.soil }}>{name}:</span>{' '}
-                        <strong style={{ color: colors.dark }}>{pct}%</strong>
-                      </div>
-                    ))}
+                    {Object.entries(recipe.ingredients).map(([name, pct]) => {
+                      const inStock = farmData.feedInventory.ingredients.some(
+                        ing => ing.name.includes(name.split(' ')[0]) || name.includes(ing.name.split(' ')[0])
+                      );
+                      const showStock = farmData.feedInventory.ingredients.length > 0;
+                      return (
+                        <div key={name} style={{
+                          padding: '4px 8px', borderRadius: '6px', fontSize: '12px',
+                          backgroundColor: showStock ? (inStock ? colors.green + '15' : colors.orange + '15') : colors.cream,
+                          border: showStock ? `1px solid ${inStock ? colors.green + '40' : colors.orange + '40'}` : 'none'
+                        }}>
+                          {showStock && <span style={{ color: inStock ? colors.green : colors.orange }}>● </span>}
+                          <span style={{ color: colors.soil }}>{name}:</span>{' '}
+                          <strong style={{ color: colors.dark }}>{pct}%</strong>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {/* استراتيجية التغذية */}

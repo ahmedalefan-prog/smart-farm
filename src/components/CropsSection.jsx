@@ -6,7 +6,7 @@ import Modal from './shared/Modal';
 import Field from './shared/Field';
 
 const CropsSection = () => {
-  const { farmData, updateLand, deleteLand } = useFarm();
+  const { farmData, updateLand, deleteLand, addTransaction } = useFarm();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('الكل');
   const [selectedCrop, setSelectedCrop] = useState(null);
@@ -39,7 +39,15 @@ const CropsSection = () => {
       expectedHarvest: null,
       cropHistory: updatedHistory
     });
-    notify(`✅ تم تسجيل حصاد ${cropName} من ${land.name}`);
+    addTransaction({
+      type: 'income',
+      category: 'crop_sales',
+      amount: 0,
+      description: `حصاد ${cropName} — ${land.name} (${land.area} دونم)`,
+      date: new Date().toISOString().split('T')[0],
+      note: 'أدخل قيمة البيع في قسم المالية'
+    });
+    notify(`✅ تم تسجيل حصاد ${cropName} — راجع المالية لإدخال قيمة البيع`);
   };
 
   const handlePlantCrop = () => {

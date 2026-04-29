@@ -3,13 +3,25 @@ import { colors } from '../theme/theme';
 import Field from './shared/Field';
 
 const cropCoefficients = {
-  'قمح':     { initial: 0.3,  mid: 1.15, late: 0.4 },
-  'ذرة':     { initial: 0.3,  mid: 1.2,  late: 0.6 },
-  'برسيم':   { initial: 0.4,  mid: 1.2,  late: 1.15 },
-  'طماطم':   { initial: 0.6,  mid: 1.15, late: 0.8 },
-  'خيار':    { initial: 0.5,  mid: 1.0,  late: 0.75 },
-  'باذنجان': { initial: 0.5,  mid: 1.05, late: 0.9 },
-  'بطاطا':   { initial: 0.5,  mid: 1.15, late: 0.75 }
+  'قمح':       { initial: 0.3,  mid: 1.15, late: 0.4  },
+  'شعير':      { initial: 0.3,  mid: 1.15, late: 0.25 },
+  'ذرة':       { initial: 0.3,  mid: 1.2,  late: 0.6  },
+  'برسيم':     { initial: 0.4,  mid: 1.2,  late: 1.15 },
+  'دوار شمس': { initial: 0.35, mid: 1.0,  late: 0.35 },
+  'سمسم':      { initial: 0.35, mid: 1.1,  late: 0.5  },
+  'طماطم':     { initial: 0.6,  mid: 1.15, late: 0.8  },
+  'خيار':      { initial: 0.5,  mid: 1.0,  late: 0.75 },
+  'باذنجان':   { initial: 0.5,  mid: 1.05, late: 0.9  },
+  'فليفلة':    { initial: 0.6,  mid: 1.05, late: 0.9  },
+  'كوسا':      { initial: 0.5,  mid: 1.0,  late: 0.75 },
+  'بطيخ':      { initial: 0.4,  mid: 1.0,  late: 0.75 },
+  'شمام':      { initial: 0.45, mid: 1.05, late: 0.75 },
+  'بطاطا':     { initial: 0.5,  mid: 1.15, late: 0.75 },
+  'بصل':       { initial: 0.7,  mid: 1.05, late: 0.75 },
+  'ثوم':       { initial: 0.7,  mid: 1.0,  late: 0.7  },
+  'جزر':       { initial: 0.7,  mid: 1.05, late: 0.95 },
+  'طماطة (شتوي)': { initial: 0.6, mid: 1.15, late: 0.8 },
+  'نخيل':      { initial: 0.9,  mid: 0.95, late: 0.95 },
 };
 
 const soilTypes = {
@@ -75,12 +87,24 @@ const optimalTiming = [
 ];
 
 const fertilizerData = {
-  'قمح':    { n: 120, p: 60,  k: 40,  splits: 3 },
-  'ذرة':    { n: 200, p: 80,  k: 60,  splits: 4 },
-  'طماطم':  { n: 150, p: 100, k: 200, splits: 6 },
-  'خيار':   { n: 120, p: 80,  k: 150, splits: 8 },
-  'بطاطا':  { n: 180, p: 120, k: 200, splits: 3 },
-  'باذنجان':{ n: 130, p: 90,  k: 160, splits: 5 }
+  'قمح':       { n: 120, p: 60,  k: 40,  splits: 3 },
+  'شعير':      { n: 100, p: 50,  k: 30,  splits: 2 },
+  'ذرة':       { n: 200, p: 80,  k: 60,  splits: 4 },
+  'برسيم':     { n: 30,  p: 80,  k: 60,  splits: 2 },
+  'دوار شمس': { n: 100, p: 60,  k: 80,  splits: 3 },
+  'سمسم':      { n: 60,  p: 40,  k: 40,  splits: 2 },
+  'طماطم':     { n: 150, p: 100, k: 200, splits: 6 },
+  'خيار':      { n: 120, p: 80,  k: 150, splits: 8 },
+  'فليفلة':    { n: 140, p: 100, k: 180, splits: 7 },
+  'كوسا':      { n: 100, p: 70,  k: 120, splits: 5 },
+  'بطيخ':      { n: 100, p: 80,  k: 120, splits: 4 },
+  'شمام':      { n: 110, p: 80,  k: 130, splits: 5 },
+  'باذنجان':   { n: 130, p: 90,  k: 160, splits: 5 },
+  'بطاطا':     { n: 180, p: 120, k: 200, splits: 3 },
+  'بصل':       { n: 120, p: 80,  k: 100, splits: 4 },
+  'ثوم':       { n: 100, p: 80,  k: 100, splits: 3 },
+  'جزر':       { n: 90,  p: 80,  k: 120, splits: 3 },
+  'نخيل':      { n: 80,  p: 50,  k: 200, splits: 4 },
 };
 
 const tabs = [

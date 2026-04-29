@@ -49,6 +49,17 @@ const AppContent = () => {
   const [showHelp, setShowHelp] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [activeForm, setActiveForm] = useState(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  React.useEffect(() => {
+    const goOnline  = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online',  goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
+  }, []);
+
+  const goToSub = (section, sub) => { setActiveSection(section); setActiveSubSection(sub); setShowAddMenu(false); };
 
   const renderContent = () => {
     if (activeSubSection) {
@@ -70,12 +81,12 @@ const AppContent = () => {
     }
 
     switch (activeSection) {
-      case 'crops':      return <Dashboard type="crops" />;
-      case 'livestock':  return <Dashboard type="livestock" />;
-      case 'resources':  return <Dashboard type="resources" />;
-      case 'analytics':  return <Dashboard type="analytics" />;
-      case 'knowledge':  return <Dashboard type="knowledge" />;
-      default:           return <Dashboard />;
+      case 'crops':      return <Dashboard type="crops"      onGoTo={goToSub} />;
+      case 'livestock':  return <Dashboard type="livestock"  onGoTo={goToSub} />;
+      case 'resources':  return <Dashboard type="resources"  onGoTo={goToSub} />;
+      case 'analytics':  return <Dashboard type="analytics"  onGoTo={goToSub} />;
+      case 'knowledge':  return <Dashboard type="knowledge"  onGoTo={goToSub} />;
+      default:           return <Dashboard onGoTo={goToSub} />;
     }
   };
 
@@ -95,10 +106,20 @@ const AppContent = () => {
         onAlertClick={() => { setActiveSection('analytics'); setActiveSubSection('reports'); }}
       />
 
+      {!isOnline && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 3000,
+          backgroundColor: '#374151', color: 'white',
+          padding: '8px 16px', textAlign: 'center', fontSize: '13px'
+        }}>
+          📵 لا يوجد اتصال بالإنترنت — البيانات محفوظة محلياً
+        </div>
+      )}
+
       <main className="app-main" style={{
         backgroundColor: colors.cream,
         minHeight: '100vh',
-        paddingTop: 'calc(104px + env(safe-area-inset-top, 0px))',
+        paddingTop: `calc(104px + env(safe-area-inset-top, 0px) + ${isOnline ? '0px' : '36px'})`,
         paddingBottom: '80px'
       }}>
         {!hasTodayLog && (

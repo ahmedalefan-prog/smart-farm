@@ -27,6 +27,7 @@ const DailyLogForm = ({ onSuccess }) => {
     treatments: '',
     feedConsumed: '',
     irrigationDone: false,
+    irrigationAmount: '',
     fieldNotes: ''
   });
   const [error, setError] = useState('');
@@ -70,6 +71,7 @@ const DailyLogForm = ({ onSuccess }) => {
       treatments: formData.treatments,
       feedConsumed: Number(formData.feedConsumed) || 0,
       irrigationDone: formData.irrigationDone,
+      irrigationAmount: Number(formData.irrigationAmount) || 0,
       fieldNotes: formData.fieldNotes
     });
     onSuccess?.();
@@ -194,7 +196,7 @@ const DailyLogForm = ({ onSuccess }) => {
 
       <h3 style={{ color: colors.dark, margin: '20px 0 16px' }}>🌾 المحاصيل</h3>
 
-      <div style={{ marginBottom: '16px' }}>
+      <div style={{ marginBottom: '10px' }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
           <input
             type="checkbox"
@@ -205,6 +207,17 @@ const DailyLogForm = ({ onSuccess }) => {
           <span>تم تنفيذ الري اليوم</span>
         </label>
       </div>
+      {formData.irrigationDone && (
+        <Field
+          label="كمية المياه المستخدمة"
+          type="text"
+          inputMode="decimal"
+          unit="م³"
+          value={formData.irrigationAmount}
+          onChange={(val) => setFormData({ ...formData, irrigationAmount: val })}
+          hint="اختياري — لحساب الإنتاجية المائية"
+        />
+      )}
 
       <Field
         label="ملاحظات حقلية"

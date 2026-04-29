@@ -26,7 +26,8 @@ const ReportsSection = () => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-  const years = [2024, 2025, 2026];
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear - 2, currentYear - 1, currentYear].filter(y => y >= 2024);
 
   // ─── معالجة السجلات ──────────────────────────────────────────────────────
   const dailyLogsData = useMemo(() =>

@@ -1,6 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useFarm } from '../context/FarmContext';
 import { colors } from '../theme/theme';
+
+const TODAY_KEY = () => 'dismissedTasks_' + new Date().toISOString().split('T')[0];
 
 const addDays = (dateStr, days) => {
   const d = new Date(dateStr);
@@ -15,6 +17,20 @@ const PRIORITY = { critical: 0, high: 1, medium: 2, low: 3 };
 const TodayTasks = ({ onAction }) => {
   const { farmData } = useFarm();
   const today = new Date().toISOString().split('T')[0];
+
+  const [dismissed, setDismissed] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(TODAY_KEY()) || '[]')); }
+    catch { return new Set(); }
+  });
+
+  const dismissTask = (id) => {
+    setDismissed(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      localStorage.setItem(TODAY_KEY(), JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   const tasks = useMemo(() => {
     const list = [];
@@ -146,28 +162,23 @@ const TodayTasks = ({ onAction }) => {
       }
     });
 
-    /* ── 7. إذا لا مهام ── */
-    if (list.length === 0) {
-      list.push({
-        id: 'all-good',
-        priority: 'low',
-        icon: '✅',
-        title: 'كل شيء على ما يرام اليوم',
-        subtitle: 'لا توجد مهام عاجلة',
-        action: null,
-        color: colors.green
-      });
-    }
-
     return list.sort((a, b) => PRIORITY[a.priority] - PRIORITY[b.priority]);
   }, [farmData, today]);
 
-  const criticalCount = tasks.filter(t => t.priority === 'critical').length;
-  const highCount     = tasks.filter(t => t.priority === 'high').length;
+  const visibleTasks = tasks.filter(t => !dismissed.has(t.id));
+
+  const displayTasks = visibleTasks.length > 0 ? visibleTasks : [{
+    id: 'all-good', priority: 'low', icon: '✅',
+    title: 'كل شيء على ما يرام اليوم',
+    subtitle: 'لا توجد مهام عاجلة',
+    action: null, color: colors.green
+  }];
+
+  const criticalCount = visibleTasks.filter(t => t.priority === 'critical').length;
+  const highCount     = visibleTasks.filter(t => t.priority === 'high').length;
 
   return (
     <div style={{ backgroundColor: 'white', borderRadius: '14px', padding: '14px', marginBottom: '16px' }}>
-      {/* عنوان */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
         <h3 style={{ color: colors.dark, margin: 0, fontSize: '15px' }}>📌 مهام اليوم</h3>
         {(criticalCount + highCount) > 0 && (
@@ -181,30 +192,47 @@ const TodayTasks = ({ onAction }) => {
         )}
       </div>
 
-      {/* قائمة المهام */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {tasks.map(task => (
+        {displayTasks.map(task => (
           <div
             key={task.id}
-            onClick={() => task.action && onAction?.(task.action)}
             style={{
               display: 'flex', alignItems: 'center', gap: '10px',
               padding: '10px 12px', borderRadius: '10px',
               backgroundColor: task.color + '12',
-              border: `1px solid ${task.color}30`,
-              cursor: task.action ? 'pointer' : 'default'
+              border: `1px solid ${task.color}30`
             }}
           >
-            <span style={{ fontSize: '22px', flexShrink: 0 }}>{task.icon}</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <span
+              style={{ fontSize: '22px', flexShrink: 0, cursor: task.action ? 'pointer' : 'default' }}
+              onClick={() => task.action && onAction?.(task.action)}
+            >{task.icon}</span>
+            <div
+              style={{ flex: 1, minWidth: 0, cursor: task.action ? 'pointer' : 'default' }}
+              onClick={() => task.action && onAction?.(task.action)}
+            >
               <div style={{ fontSize: '13px', fontWeight: 'bold', color: colors.dark }}>{task.title}</div>
               <div style={{ fontSize: '11px', color: colors.soil, marginTop: '2px' }}>{task.subtitle}</div>
             </div>
             {task.action && (
-              <span style={{ color: task.color, fontSize: '16px', flexShrink: 0 }}>›</span>
+              <span
+                onClick={() => onAction?.(task.action)}
+                style={{ color: task.color, fontSize: '16px', flexShrink: 0, cursor: 'pointer' }}
+              >›</span>
             )}
             {task.priority === 'critical' && (
               <span style={{ backgroundColor: '#ef4444', color: 'white', fontSize: '9px', padding: '2px 6px', borderRadius: '8px', flexShrink: 0, fontWeight: 'bold' }}>عاجل</span>
+            )}
+            {task.id !== 'all-good' && (
+              <button
+                onClick={() => dismissTask(task.id)}
+                title="تجاهل لهذا اليوم"
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: colors.soil, fontSize: '16px', flexShrink: 0,
+                  padding: '0 2px', opacity: 0.5, lineHeight: 1
+                }}
+              >✕</button>
             )}
           </div>
         ))}

@@ -37,9 +37,9 @@ const CircularFlow = () => {
     }, 0);
     const fishWaterForIrrigation = fishWaterVolume * 0.1;
 
-    const lastLog = farmData.dailyLogs[farmData.dailyLogs.length - 1];
-    const totalWaterUsed = lastLog?.irrigationDone ? totalCropArea * 5000 : 0;
-    const waterProductivity = totalWaterUsed > 0 ? (totalCropArea / (totalWaterUsed / 1000)).toFixed(2) : 0;
+    const recentIrrigationLogs = farmData.dailyLogs.filter(l => l.irrigationDone && l.irrigationAmount > 0);
+    const totalWaterUsed = recentIrrigationLogs.reduce((s, l) => s + (l.irrigationAmount || 0), 0);
+    const waterProductivity = totalWaterUsed > 0 ? (plantedArea / totalWaterUsed * 1000).toFixed(2) : 0;
 
     return {
       manure: {
