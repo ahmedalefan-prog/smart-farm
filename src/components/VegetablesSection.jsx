@@ -15,7 +15,7 @@ const ProfitabilityStars = ({ count }) => (
 );
 
 const VegetablesSection = () => {
-  const { farmData, updateLand } = useFarm();
+  const { farmData, updateLand, addTransaction } = useFarm();
   const [searchTerm, setSearchTerm]       = useState('');
   const [selectedCategory, setSelectedCategory] = useState('الكل');
   const [selectedSeason, setSelectedSeason]     = useState('الكل');
@@ -48,6 +48,26 @@ const VegetablesSection = () => {
   const notify = (msg, type = 'success') => {
     setNotification({ msg, type });
     setTimeout(() => setNotification(null), 3500);
+  };
+
+  const harvestCrop = (land) => {
+    const cropName = land.currentCrop;
+    const updatedHistory = [...(land.cropHistory || [])];
+    if (cropName) updatedHistory.push(cropName);
+    updateLand(land.id, {
+      currentCrop: null,
+      plantingDate: null,
+      expectedHarvest: null,
+      cropHistory: updatedHistory
+    });
+    addTransaction({
+      type: 'income',
+      category: 'crop_sales',
+      amount: 0,
+      description: `حصاد ${cropName} — ${land.name} (${land.area} دونم)`,
+      note: 'أدخل القيمة الفعلية في قسم المالية'
+    });
+    notify(`✅ تم تسجيل حصاد ${cropName} — لا تنسَ إدخال القيمة في المالية`);
   };
 
   const handlePlantItem = () => {
@@ -89,6 +109,44 @@ const VegetablesSection = () => {
       )}
 
       <h2 style={{ color: colors.dark, marginBottom: '16px' }}>🌿 المحاصيل والفواكه</h2>
+
+      {/* الأراضي المزروعة حالياً */}
+      {farmData.lands.filter(l => l.currentCrop).length > 0 && (
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ color: colors.dark, fontSize: '15px', marginBottom: '10px' }}>📍 الأراضي المزروعة حالياً</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {farmData.lands.filter(l => l.currentCrop).map(land => {
+              const today = new Date();
+              const harvest = land.expectedHarvest ? new Date(land.expectedHarvest) : null;
+              const daysLeft = harvest ? Math.ceil((harvest - today) / (1000 * 60 * 60 * 24)) : null;
+              const readyColor = daysLeft !== null && daysLeft <= 7 ? colors.green : daysLeft !== null && daysLeft <= 21 ? colors.gold : colors.soil;
+              return (
+                <div key={land.id} style={{
+                  backgroundColor: 'white', borderRadius: '10px',
+                  border: `1px solid ${colors.sand}`, padding: '12px 14px',
+                  display: 'flex', alignItems: 'center', gap: '10px'
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '14px', color: colors.dark }}>
+                      {land.currentCrop} — {land.name}
+                    </div>
+                    <div style={{ fontSize: '12px', color: readyColor, marginTop: '3px' }}>
+                      {daysLeft !== null
+                        ? daysLeft <= 0 ? '🟢 جاهز للحصاد' : `⏳ ${daysLeft} يوم للحصاد`
+                        : `${land.area} دونم`}
+                    </div>
+                  </div>
+                  <button onClick={() => harvestCrop(land)} style={{
+                    padding: '8px 14px', backgroundColor: colors.lime + '30', color: colors.green,
+                    border: 'none', borderRadius: '8px', cursor: 'pointer',
+                    fontFamily: 'inherit', fontSize: '13px', fontWeight: 'bold', flexShrink: 0
+                  }}>✅ تم الحصاد</button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* بحث */}
       <input

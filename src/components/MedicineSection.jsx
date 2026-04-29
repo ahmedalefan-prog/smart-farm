@@ -65,17 +65,25 @@ const emptyForm = {
   expiryDate: '', cost: '', supplier: '', notes: ''
 };
 
-const MedicineSection = () => {
-  const { farmData, addMedicine, updateMedicine, deleteMedicine } = useFarm();
-  const items = farmData.medicineInventory?.items || [];
+const emptyUseForm = {
+  medicineId: '', amountUsed: '', target: '', notes: '',
+  date: new Date().toISOString().split('T')[0]
+};
 
-  const [tab, setTab] = useState('list'); // list | add
+const MedicineSection = () => {
+  const { farmData, addMedicine, updateMedicine, deleteMedicine, addTreatmentLog } = useFarm();
+  const items = farmData.medicineInventory?.items || [];
+  const treatmentLogs = farmData.medicineInventory?.treatmentLogs || [];
+
+  const [tab, setTab] = useState('list'); // list | add | use | logs
   const [filter, setFilter] = useState('all');
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [adjustId, setAdjustId] = useState(null);
   const [adjustVal, setAdjustVal] = useState('');
+  const [useForm, setUseForm] = useState(emptyUseForm);
+  const [useSuccess, setUseSuccess] = useState(false);
 
   const filtered = useMemo(() => {
     if (filter === 'all') return items;
@@ -142,6 +150,25 @@ const MedicineSection = () => {
     setAdjustVal('');
   };
 
+  const handleUseSubmit = () => {
+    if (!useForm.medicineId || !useForm.amountUsed) return;
+    const med = items.find(m => m.id === useForm.medicineId);
+    if (!med) return;
+    addTreatmentLog({
+      medicineId: useForm.medicineId,
+      medicineName: med.name,
+      medicineType: med.type,
+      medicineUnit: med.unit,
+      amountUsed: parseFloat(useForm.amountUsed) || 0,
+      target: useForm.target,
+      notes: useForm.notes,
+      date: useForm.date
+    });
+    setUseSuccess(true);
+    setUseForm(emptyUseForm);
+    setTimeout(() => setUseSuccess(false), 2000);
+  };
+
   const inputStyle = {
     width: '100%', padding: '10px 12px', borderRadius: '8px',
     border: `1px solid ${colors.sand}`, fontSize: '15px',
@@ -156,16 +183,19 @@ const MedicineSection = () => {
 
   return (
     <div style={{ padding: '16px' }}>
-      {/* رأس + تبويبات */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+      {/* التبويبات */}
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '2px' }}>
         {[
-          { id: 'list', label: `المخزون (${items.length})` },
-          { id: 'add',  label: editId ? '✏️ تعديل' : '+ إضافة' }
+          { id: 'list', label: `📦 المخزون` },
+          { id: 'use',  label: '💉 استخدام' },
+          { id: 'logs', label: `📋 السجل (${treatmentLogs.length})` },
+          { id: 'add',  label: editId ? '✏️ تعديل' : '➕ إضافة' }
         ].map(t => (
           <button key={t.id} onClick={() => { setTab(t.id); if (t.id === 'list') { setEditId(null); setForm(emptyForm); } }}
             style={{
-              flex: 1, padding: '10px', borderRadius: '10px', border: 'none',
-              cursor: 'pointer', fontFamily: 'inherit', fontWeight: 'bold', fontSize: '14px',
+              flexShrink: 0, padding: '9px 14px', borderRadius: '10px', border: 'none',
+              cursor: 'pointer', fontFamily: 'inherit', fontWeight: 'bold', fontSize: '13px',
+              whiteSpace: 'nowrap',
               backgroundColor: tab === t.id ? colors.dark : 'white',
               color: tab === t.id ? 'white' : colors.soil
             }}>{t.label}</button>
@@ -430,6 +460,166 @@ const MedicineSection = () => {
             }}>
             {editId ? '💾 حفظ التعديلات' : '✅ إضافة إلى المخزون'}
           </button>
+        </div>
+      )}
+
+      {/* ── تبويب: استخدام دواء ── */}
+      {tab === 'use' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {useSuccess && (
+            <div style={{
+              padding: '12px', backgroundColor: colors.green + '20', color: colors.green,
+              borderRadius: '10px', textAlign: 'center', fontWeight: 'bold', fontSize: '14px'
+            }}>✅ تم تسجيل الاستخدام وخصم الكمية من المخزون</div>
+          )}
+
+          {items.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.soil }}>
+              <div style={{ fontSize: '40px', marginBottom: '10px' }}>💊</div>
+              <div style={{ fontWeight: 'bold' }}>لا يوجد دواء في المخزون</div>
+              <div style={{ fontSize: '13px', marginTop: '6px' }}>أضف دواءً أولاً من تبويب "إضافة"</div>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label style={labelStyle}>الدواء / اللقاح *</label>
+                <select
+                  value={useForm.medicineId}
+                  onChange={e => setUseForm(f => ({ ...f, medicineId: e.target.value }))}
+                  style={inputStyle}
+                >
+                  <option value="">— اختر دواءً —</option>
+                  {items.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {typeInfo(m.type).icon} {m.name} ({m.quantity} {m.unit} متاح)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={labelStyle}>الكمية المستخدمة *</label>
+                  <input
+                    type="text" inputMode="decimal"
+                    value={useForm.amountUsed}
+                    onChange={e => setUseForm(f => ({ ...f, amountUsed: e.target.value }))}
+                    placeholder="0"
+                    style={inputStyle}
+                  />
+                  {useForm.medicineId && (
+                    <div style={{ fontSize: '12px', color: colors.soil, marginTop: '4px' }}>
+                      الوحدة: {items.find(m => m.id === useForm.medicineId)?.unit || ''}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label style={labelStyle}>تاريخ الاستخدام</label>
+                  <input
+                    type="date"
+                    value={useForm.date}
+                    onChange={e => setUseForm(f => ({ ...f, date: e.target.value }))}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>الحيوانات المعالجة</label>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {ANIMAL_TARGETS.map(a => (
+                    <button key={a.id}
+                      onClick={() => setUseForm(f => ({ ...f, target: f.target === a.id ? '' : a.id }))}
+                      style={{
+                        padding: '7px 14px', borderRadius: '16px',
+                        border: `2px solid ${useForm.target === a.id ? colors.green : colors.sand}`,
+                        backgroundColor: useForm.target === a.id ? colors.green + '15' : 'white',
+                        cursor: 'pointer', fontFamily: 'inherit', fontSize: '13px',
+                        color: useForm.target === a.id ? colors.green : colors.soil
+                      }}>
+                      {a.icon} {a.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>ملاحظات (اختياري)</label>
+                <textarea
+                  value={useForm.notes}
+                  onChange={e => setUseForm(f => ({ ...f, notes: e.target.value }))}
+                  placeholder="مثال: جرعة وقائية لكامل القطيع، جرعة 2 مل للرأس..."
+                  rows={3}
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                />
+              </div>
+
+              <button
+                onClick={handleUseSubmit}
+                disabled={!useForm.medicineId || !useForm.amountUsed}
+                style={{
+                  padding: '14px',
+                  backgroundColor: useForm.medicineId && useForm.amountUsed ? colors.green : colors.sand,
+                  color: 'white', border: 'none', borderRadius: '10px',
+                  cursor: useForm.medicineId && useForm.amountUsed ? 'pointer' : 'default',
+                  fontFamily: 'inherit', fontSize: '15px', fontWeight: 'bold'
+                }}>
+                💉 تسجيل الاستخدام وخصم المخزون
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── تبويب: سجل العلاجات ── */}
+      {tab === 'logs' && (
+        <div>
+          {treatmentLogs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.soil }}>
+              <div style={{ fontSize: '40px', marginBottom: '10px' }}>📋</div>
+              <div style={{ fontWeight: 'bold' }}>لا توجد سجلات علاج بعد</div>
+              <div style={{ fontSize: '13px', marginTop: '6px' }}>سجّل استخدام الأدوية من تبويب "استخدام"</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[...treatmentLogs].sort((a, b) => b.date.localeCompare(a.date)).map(log => {
+                const t = typeInfo(log.medicineType);
+                const animalTarget = ANIMAL_TARGETS.find(a => a.id === log.target);
+                return (
+                  <div key={log.id} style={{
+                    backgroundColor: 'white', borderRadius: '12px',
+                    border: `1px solid ${colors.sand}`, padding: '12px 14px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{
+                        width: '38px', height: '38px', borderRadius: '10px',
+                        backgroundColor: t.color + '18', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', fontSize: '20px', flexShrink: 0
+                      }}>{t.icon}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '14px', color: colors.dark }}>{log.medicineName}</div>
+                        <div style={{ fontSize: '12px', color: colors.soil, marginTop: '2px' }}>{log.date}</div>
+                      </div>
+                      <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                        <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#ef4444' }}>
+                          -{log.amountUsed}
+                        </div>
+                        <div style={{ fontSize: '11px', color: colors.soil }}>{log.medicineUnit}</div>
+                      </div>
+                    </div>
+                    {(animalTarget || log.notes) && (
+                      <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${colors.cream}`, fontSize: '13px', color: colors.soil }}>
+                        {animalTarget && (
+                          <span style={{ marginLeft: '12px' }}>{animalTarget.icon} {animalTarget.label}</span>
+                        )}
+                        {log.notes && <span>{log.notes}</span>}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>

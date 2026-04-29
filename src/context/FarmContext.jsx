@@ -36,8 +36,8 @@ const initialFarmData = {
   },
   soilTests: [],
   dailyLogs: [],
-  finances: { transactions: [] },
-  medicineInventory: { items: [] },
+  finances: { transactions: [], budget: {} },
+  medicineInventory: { items: [], treatmentLogs: [] },
   alerts: []
 };
 
@@ -359,6 +359,7 @@ export const FarmProvider = ({ children }) => {
     setFarmData(prev => ({
       ...prev,
       medicineInventory: {
+        ...prev.medicineInventory,
         items: [...(prev.medicineInventory?.items || []), { ...item, id: Date.now().toString(), addedDate: new Date().toISOString() }]
       }
     }));
@@ -368,6 +369,7 @@ export const FarmProvider = ({ children }) => {
     setFarmData(prev => ({
       ...prev,
       medicineInventory: {
+        ...prev.medicineInventory,
         items: (prev.medicineInventory?.items || []).map(m => m.id === id ? { ...m, ...updates } : m)
       }
     }));
@@ -377,8 +379,31 @@ export const FarmProvider = ({ children }) => {
     setFarmData(prev => ({
       ...prev,
       medicineInventory: {
+        ...prev.medicineInventory,
         items: (prev.medicineInventory?.items || []).filter(m => m.id !== id)
       }
+    }));
+  };
+
+  const addTreatmentLog = (log) => {
+    setFarmData(prev => {
+      const items = (prev.medicineInventory?.items || []).map(m =>
+        m.id === log.medicineId
+          ? { ...m, quantity: Math.max(0, (m.quantity || 0) - (log.amountUsed || 0)) }
+          : m
+      );
+      const treatmentLogs = [
+        ...(prev.medicineInventory?.treatmentLogs || []),
+        { ...log, id: Date.now().toString(), date: log.date || new Date().toISOString().split('T')[0] }
+      ];
+      return { ...prev, medicineInventory: { ...prev.medicineInventory, items, treatmentLogs } };
+    });
+  };
+
+  const updateFinanceBudget = (budget) => {
+    setFarmData(prev => ({
+      ...prev,
+      finances: { ...prev.finances, budget }
     }));
   };
 
@@ -386,8 +411,8 @@ export const FarmProvider = ({ children }) => {
   const importFullData = (data) => {
     setFarmData({
       ...initialFarmData, ...data,
-      finances: data.finances || { transactions: [] },
-      medicineInventory: data.medicineInventory || { items: [] }
+      finances: { transactions: [], budget: {}, ...(data.finances || {}) },
+      medicineInventory: { items: [], treatmentLogs: [], ...(data.medicineInventory || {}) }
     });
   };
 
@@ -445,6 +470,8 @@ export const FarmProvider = ({ children }) => {
     addMedicine,
     updateMedicine,
     deleteMedicine,
+    addTreatmentLog,
+    updateFinanceBudget,
     importFullData,
     markAlertAsRead,
     dismissAlert,

@@ -41,7 +41,7 @@ const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو
 
 /* ════════════════════════════════════════════ */
 const FinanceSection = () => {
-  const { farmData, addTransaction, deleteTransaction } = useFarm();
+  const { farmData, addTransaction, deleteTransaction, updateFinanceBudget } = useFarm();
   const transactions = farmData.finances?.transactions || [];
 
   const [tab,         setTab]         = useState('summary');
@@ -49,6 +49,13 @@ const FinanceSection = () => {
   const [txFilter,    setTxFilter]    = useState('all');  // all|income|expense
   const [showForm,    setShowForm]    = useState(false);
   const [pendingDel,  setPendingDel]  = useState(null);
+  const [budgetDraft, setBudgetDraft] = useState(() => {
+    const saved = farmData.finances?.budget || {};
+    const draft = {};
+    [...INCOME_CATS, ...EXPENSE_CATS].forEach(c => { draft[c.id] = saved[c.id] ? String(saved[c.id]) : ''; });
+    return draft;
+  });
+  const [budgetSaved, setBudgetSaved] = useState(false);
   const [formData,    setFormData]    = useState({
     type: 'income', category: '', amount: '', description: '', date: new Date().toISOString().split('T')[0], note: ''
   });
@@ -131,9 +138,30 @@ const FinanceSection = () => {
     { id: 'all',   label: 'الكل' }
   ];
 
+  /* ── actuals per category for budget comparison ── */
+  const actualByCategory = useMemo(() => {
+    const map = {};
+    filtered.forEach(t => {
+      map[t.category] = (map[t.category] || 0) + (t.amount || 0);
+    });
+    return map;
+  }, [filtered]);
+
+  const saveBudget = () => {
+    const parsed = {};
+    Object.entries(budgetDraft).forEach(([k, v]) => {
+      const n = parseFloat(v);
+      if (!isNaN(n) && n > 0) parsed[k] = n;
+    });
+    updateFinanceBudget(parsed);
+    setBudgetSaved(true);
+    setTimeout(() => setBudgetSaved(false), 2000);
+  };
+
   const tabs = [
     { id: 'summary',      label: '📊 ملخص' },
     { id: 'transactions', label: '📋 الصفقات' },
+    { id: 'budget',       label: '🎯 الميزانية' },
     { id: 'add',          label: '➕ إضافة' }
   ];
 
@@ -433,6 +461,105 @@ const FinanceSection = () => {
           >
             {formData.type === 'income' ? '📈 حفظ الإيراد' : '📉 حفظ المصروف'}
           </button>
+        </div>
+      )}
+
+      {/* ════ تبويب: الميزانية ════ */}
+      {tab === 'budget' && (
+        <div>
+          {budgetSaved && (
+            <div style={{ padding: '10px', backgroundColor: colors.green + '20', color: colors.green, borderRadius: '10px', textAlign: 'center', fontWeight: 'bold', marginBottom: '14px', fontSize: '14px' }}>
+              ✅ تم حفظ الميزانية
+            </div>
+          )}
+
+          <div style={{ backgroundColor: colors.sky + '10', border: `1px solid ${colors.sky}40`, borderRadius: '10px', padding: '12px 14px', marginBottom: '16px', fontSize: '13px', color: colors.dark }}>
+            💡 أدخل المبالغ المخططة لكل تصنيف، ثم قارنها بالفعلي للفترة المختارة أعلاه.
+          </div>
+
+          {/* الإيرادات */}
+          <h4 style={{ color: colors.green, marginBottom: '10px', fontSize: '14px' }}>📈 الإيرادات المخططة</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+            {INCOME_CATS.map(cat => {
+              const planned = parseFloat(budgetDraft[cat.id]) || 0;
+              const actual  = actualByCategory[cat.id] || 0;
+              const ratio   = planned > 0 ? Math.min(1, actual / planned) : actual > 0 ? 1 : 0;
+              const barColor = actual >= planned && planned > 0 ? colors.green : actual > 0 ? colors.gold : colors.sand;
+              return (
+                <div key={cat.id} style={{ backgroundColor: 'white', borderRadius: '10px', border: `1px solid ${colors.sand}`, padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '18px' }}>{cat.icon}</span>
+                    <span style={{ flex: 1, fontSize: '13px', fontWeight: 'bold', color: colors.dark }}>{cat.label}</span>
+                    <input
+                      type="text" inputMode="numeric"
+                      value={budgetDraft[cat.id]}
+                      onChange={e => setBudgetDraft(d => ({ ...d, [cat.id]: e.target.value }))}
+                      placeholder="مخطط"
+                      style={{ width: '110px', padding: '6px 8px', borderRadius: '6px', border: `1px solid ${colors.sand}`, fontSize: '13px', fontFamily: 'inherit', textAlign: 'center' }}
+                    />
+                  </div>
+                  {(planned > 0 || actual > 0) && (
+                    <>
+                      <div style={{ height: '6px', backgroundColor: colors.cream, borderRadius: '3px', overflow: 'hidden', marginBottom: '4px' }}>
+                        <div style={{ width: `${ratio * 100}%`, height: '100%', backgroundColor: barColor, borderRadius: '3px', transition: 'width 0.3s' }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: colors.soil }}>
+                        <span>الفعلي: <strong style={{ color: colors.green }}>{fmt(actual)}</strong></span>
+                        {planned > 0 && <span>المخطط: <strong>{fmt(planned)}</strong></span>}
+                        {planned > 0 && <span style={{ color: actual >= planned ? colors.green : colors.gold }}>{Math.round(ratio * 100)}%</span>}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* المصاريف */}
+          <h4 style={{ color: '#dc2626', marginBottom: '10px', fontSize: '14px' }}>📉 المصاريف المخططة</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+            {EXPENSE_CATS.map(cat => {
+              const planned = parseFloat(budgetDraft[cat.id]) || 0;
+              const actual  = actualByCategory[cat.id] || 0;
+              const ratio   = planned > 0 ? Math.min(1, actual / planned) : actual > 0 ? 1 : 0;
+              const overBudget = planned > 0 && actual > planned;
+              const barColor = overBudget ? '#ef4444' : actual > 0 ? colors.gold : colors.sand;
+              return (
+                <div key={cat.id} style={{ backgroundColor: 'white', borderRadius: '10px', border: `1px solid ${overBudget ? '#fecaca' : colors.sand}`, padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '18px' }}>{cat.icon}</span>
+                    <span style={{ flex: 1, fontSize: '13px', fontWeight: 'bold', color: colors.dark }}>{cat.label}</span>
+                    {overBudget && <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>⚠️ تجاوز</span>}
+                    <input
+                      type="text" inputMode="numeric"
+                      value={budgetDraft[cat.id]}
+                      onChange={e => setBudgetDraft(d => ({ ...d, [cat.id]: e.target.value }))}
+                      placeholder="مخطط"
+                      style={{ width: '110px', padding: '6px 8px', borderRadius: '6px', border: `1px solid ${overBudget ? '#fca5a5' : colors.sand}`, fontSize: '13px', fontFamily: 'inherit', textAlign: 'center' }}
+                    />
+                  </div>
+                  {(planned > 0 || actual > 0) && (
+                    <>
+                      <div style={{ height: '6px', backgroundColor: colors.cream, borderRadius: '3px', overflow: 'hidden', marginBottom: '4px' }}>
+                        <div style={{ width: `${Math.min(ratio, 1) * 100}%`, height: '100%', backgroundColor: barColor, borderRadius: '3px', transition: 'width 0.3s' }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: colors.soil }}>
+                        <span>الفعلي: <strong style={{ color: overBudget ? '#dc2626' : colors.soil }}>{fmt(actual)}</strong></span>
+                        {planned > 0 && <span>المخطط: <strong>{fmt(planned)}</strong></span>}
+                        {planned > 0 && <span style={{ color: overBudget ? '#ef4444' : colors.green }}>{Math.round(ratio * 100)}%</span>}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <button onClick={saveBudget} style={{
+            width: '100%', padding: '14px', backgroundColor: colors.dark, color: 'white',
+            border: 'none', borderRadius: '10px', cursor: 'pointer',
+            fontFamily: 'inherit', fontSize: '15px', fontWeight: 'bold'
+          }}>💾 حفظ الميزانية</button>
         </div>
       )}
     </div>
