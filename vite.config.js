@@ -8,10 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: [
-        'favicon.svg', 'apple-touch-icon.png', 'masked-icon.svg',
-        'splash-*.png'
-      ],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'المزرعة الذكية - الاكتفاء الذاتي',
         short_name: 'المزرعة الذكية',
@@ -41,33 +38,26 @@ export default defineConfig({
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
-        cleanupOutdatedCaches: true,
-        navigateFallback: '/smart-farm/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
-          // Weather API — NetworkFirst: tries network, falls back to last cached response
           {
-            urlPattern: /^https:\/\/api\.open-meteo\.com\/.*/i,
-            handler: 'NetworkFirst',
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
             options: {
-              cacheName: 'weather-cache',
-              networkTimeoutSeconds: 5,
+              cacheName: 'google-fonts-cache',
               expiration: {
-                maxEntries: 5,
-                maxAgeSeconds: 60 * 60 * 6  // 6 hours
-              },
-              cacheableResponse: { statuses: [0, 200] }
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              }
             }
           },
-          // Static images
           {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif)$/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'images-cache',
               expiration: {
-                maxEntries: 60,
+                maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24 * 30
               }
             }
